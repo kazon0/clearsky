@@ -27,7 +27,7 @@ class _CommunityPageState extends State<CommunityPage> {
         title: const Text('社区',
             style: TextStyle(
                 color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold)),
-        backgroundColor: Color(0xFFFFFCF7),
+        backgroundColor: Color.fromARGB(255, 243, 241, 237),
         elevation: 0.5,
         centerTitle: true,
       ),

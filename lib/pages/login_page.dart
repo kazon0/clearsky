@@ -19,15 +19,47 @@ class _LoginPageState extends State<LoginPage> {
       body: AnimatedBuilder(
         animation: authVM,
         builder: (context, _) {
-          return Container(
-            decoration: const BoxDecoration(
+          return Stack(
+            children: [
+             Container(
+              decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFE8F0FF), Color(0xFFFDFEFF)],
+                colors: [Color(0xFFEAF2F3), Color.fromARGB(255, 252, 246, 237)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
-            child: Center(
+             ),
+Positioned(
+  top: 0,
+  left: 0,
+  right: 0,
+  child: SizedBox(
+    height: 220,
+    child: ShaderMask(
+      shaderCallback: (rect) {
+        return const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white, Colors.transparent],
+          stops: [0.55, 1.0],
+        ).createShader(rect);
+      },
+      blendMode: BlendMode.dstIn,
+      child: 
+      Opacity(opacity: 0.5,
+      child: 
+        Image.asset(
+        'assets/images/musicbg.jpg',
+        fit: BoxFit.cover,
+        width: double.infinity,
+      ),
+      )
+    ),
+  ),
+),
+              
+            Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                 child: Column(
@@ -51,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                               style: TextStyle(
                                 fontSize: 25,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF3A6ED4),
+                                color: Color.fromARGB(255, 86, 146, 202),
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -78,7 +110,7 @@ Padding(
         controller: _idController,
         decoration: InputDecoration(
           labelText: '学号',
-          prefixIcon: const Icon(Icons.person_outline, color: Colors.blue),
+          prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF6F99BF)),
           filled: false, // 不要填充背景色
           border: OutlineInputBorder( borderRadius: BorderRadius.circular(12), ), // 改成简洁底线风格
         ),
@@ -89,7 +121,7 @@ Padding(
         obscureText: true,
         decoration: InputDecoration(
           labelText: '密码',
-          prefixIcon: const Icon(Icons.lock_outline, color: Colors.blue),
+          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF6F99BF)),
           filled: false,
           border: OutlineInputBorder( borderRadius: BorderRadius.circular(12), ),
         ),
@@ -103,7 +135,7 @@ Padding(
           child: Text(
             '忘记密码？',
             style: TextStyle(
-              color: Colors.blue.shade500,
+              color: Color.fromARGB(255, 123, 162, 199),
               fontSize: 13,
             ),
           ),
@@ -130,7 +162,7 @@ Padding(
                                 if (ok && mounted) Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade500,
+                                backgroundColor: Color.fromARGB(255, 121, 166, 207),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
@@ -173,7 +205,7 @@ Padding(
                           child: Text(
                             '立即注册',
                             style: TextStyle(
-                              color: Colors.blue.shade600,
+                              color: Color.fromARGB(255, 121, 162, 200),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -184,6 +216,7 @@ Padding(
                 ),
               ),
             ),
+            ],
           );
         },
       ),

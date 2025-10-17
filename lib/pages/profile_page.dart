@@ -31,6 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
 if (!userVM.isLoggedIn) {
   return Scaffold(
+    
     backgroundColor: const Color(0xFFFFFCF7),
     body: Center(
       child: Padding(

@@ -29,7 +29,7 @@ class _AIChatPageState extends State<AIChatPage> {
     // 页面加载时 AI 打招呼
     Future.delayed(const Duration(milliseconds: 400), () {
       setState(() {
-        _messages.add({'text': '你好呀，我是晴空AI 🌤️\n可以跟我聊聊你的心情吗？', 'isUser': false});
+        _messages.add({'text': '你好呀，我是晴空AI 🌤️ 可以跟我聊聊你的心情吗？', 'isUser': false});
       });
     });
   }

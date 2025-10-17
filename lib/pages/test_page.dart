@@ -97,7 +97,7 @@ class _AssessmentPageState extends State<AssessmentPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFE8F1FF), Color(0xFFF8FBFF)],
+            colors: [Color(0xFFEAF2F3), Color(0xFFF8FBFF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

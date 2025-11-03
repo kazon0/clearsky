@@ -25,4 +25,25 @@ class AuthService {
       throw Exception('登录失败：${response.statusCode}');
     }
   }
+
+  static Future<Map<String, dynamic>> register(
+      String studentId, String password, String name) async {
+    final url = Uri.parse('$baseUrl/api/register');
+    final response = await http.post(
+      url,
+      headers: jsonHeaders(),
+      body: jsonEncode({
+        'studentId': studentId,
+        'password': password,
+        'name': name,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final data = json.decode(response.body);
+      return data;
+    } else {
+      throw Exception('注册失败：${response.statusCode}');
+    }
+  }
 }

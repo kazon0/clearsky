@@ -53,10 +53,10 @@ class _ResourcePageState extends State<ResourcePage> {
                         cat['key'] == 'article'
                             ? Icons.description_outlined
                             : cat['key'] == 'video'
-                                ? Icons.play_circle_outline
-                                : cat['key'] == 'course'
-                                    ? Icons.school_outlined
-                                    : Icons.all_inclusive,
+                            ? Icons.play_circle_outline
+                            : cat['key'] == 'course'
+                            ? Icons.school_outlined
+                            : Icons.all_inclusive,
                         size: 18,
                         color: Colors.blueGrey,
                       ),
@@ -124,117 +124,118 @@ class _ResourcePageState extends State<ResourcePage> {
                   child: vm.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : vm.resources.isEmpty
-                          ? const Center(child: Text('暂无资源'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(12),
-                              itemCount: vm.resources.length,
-                              itemBuilder: (context, index) {
-                                final item = vm.resources[index];
-                                return Card(
-                                  color: Colors.grey.shade50,
-                                  elevation: 8,
-                                  shadowColor: Colors.black.withOpacity(0.15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  margin:
-                                      const EdgeInsets.only(bottom: 25, left: 4, right: 4),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(16),
-                                    onTap: () {
-                                      // TODO: 跳转详情
-                                    },
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(10),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Image.network(
-                                              item['cover'],
-                                              width: 120,
-                                              height: 90,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
+                      ? const Center(child: Text('暂无资源'))
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: vm.resources.length,
+                          itemBuilder: (context, index) {
+                            final item = vm.resources[index];
+                            return Card(
+                              color: Colors.grey.shade50,
+                              elevation: 8,
+                              shadowColor: Colors.black.withOpacity(0.15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              margin: const EdgeInsets.only(
+                                bottom: 25,
+                                left: 4,
+                                right: 4,
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () {
+                                  // TODO: 跳转详情
+                                },
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          item['cover'],
+                                          width: 120,
+                                          height: 90,
+                                          fit: BoxFit.cover,
                                         ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 10, top: 8, bottom: 8),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 10,
+                                          top: 8,
+                                          bottom: 8,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item['title'] ?? '未命名资源',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              item['summary'] ?? '',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 13,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
                                               children: [
                                                 Text(
-                                                  item['title'] ?? '未命名资源',
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
+                                                  vm.categoryLabel(
+                                                    item['category'],
                                                   ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  item['summary'] ?? '',
                                                   style: TextStyle(
-                                                    color: Colors.grey.shade600,
-                                                    fontSize: 13,
+                                                    fontSize: 12,
+                                                    color: Colors
+                                                        .blueGrey
+                                                        .shade400,
                                                   ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
                                                 ),
-                                                const SizedBox(height: 6),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      vm.categoryLabel(
-                                                          item['category']),
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors
-                                                            .blueGrey.shade400,
-                                                      ),
-                                                    ),
-                                                    IconButton(
-                                                      onPressed: () =>
-                                                          vm.toggleFavorite(
-                                                              index),
-                                                      icon: Icon(
+                                                IconButton(
+                                                  onPressed: () =>
+                                                      vm.toggleFavorite(index),
+                                                  icon: Icon(
+                                                    item['isFavorite'] ?? false
+                                                        ? Icons.star
+                                                        : Icons.star_border,
+                                                    color:
                                                         item['isFavorite'] ??
-                                                                false
-                                                            ? Icons.star
-                                                            : Icons
-                                                                .star_border,
-                                                        color: item[
-                                                                    'isFavorite'] ??
-                                                                false
-                                                            ? Colors.amber
-                                                            : Colors.grey,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                            false
+                                                        ? Colors.amber
+                                                        : Colors.grey,
+                                                  ),
                                                 ),
                                               ],
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

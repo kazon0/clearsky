@@ -62,20 +62,27 @@ class _CounselorPageState extends State<CounselorPage> {
                           Text(
                             s,
                             style: TextStyle(
-                              fontWeight: (vm.selectedSpecialty == s ||
-                                      (s == '全部' && vm.selectedSpecialty.isEmpty))
+                              fontWeight:
+                                  (vm.selectedSpecialty == s ||
+                                      (s == '全部' &&
+                                          vm.selectedSpecialty.isEmpty))
                                   ? FontWeight.bold
                                   : FontWeight.normal,
-                              color: (vm.selectedSpecialty == s ||
-                                      (s == '全部' && vm.selectedSpecialty.isEmpty))
+                              color:
+                                  (vm.selectedSpecialty == s ||
+                                      (s == '全部' &&
+                                          vm.selectedSpecialty.isEmpty))
                                   ? const Color(0xFF3A6ED4)
                                   : Colors.black87,
                             ),
                           ),
                           if (vm.selectedSpecialty == s ||
                               (s == '全部' && vm.selectedSpecialty.isEmpty))
-                            const Icon(Icons.check,
-                                color: Color(0xFF3A6ED4), size: 18),
+                            const Icon(
+                              Icons.check,
+                              color: Color(0xFF3A6ED4),
+                              size: 18,
+                            ),
                         ],
                       ),
                     ),
@@ -96,9 +103,12 @@ class _CounselorPageState extends State<CounselorPage> {
           final filteredCounselors = vm.selectedSpecialty.isEmpty
               ? vm.counselors
               : vm.counselors
-                  .where((c) => (c['specialties'] as List)
-                      .contains(vm.selectedSpecialty))
-                  .toList();
+                    .where(
+                      (c) => (c['specialties'] as List).contains(
+                        vm.selectedSpecialty,
+                      ),
+                    )
+                    .toList();
 
           if (filteredCounselors.isEmpty) {
             return Center(
@@ -168,14 +178,18 @@ class _CounselorPageState extends State<CounselorPage> {
                                 ),
                                 Row(
                                   children: [
-                                    const Icon(Icons.star,
-                                        size: 18, color: Colors.amber),
+                                    const Icon(
+                                      Icons.star,
+                                      size: 18,
+                                      color: Colors.amber,
+                                    ),
                                     const SizedBox(width: 2),
                                     Text(
                                       '${c['rating'] ?? '--'}',
                                       style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w500),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -186,21 +200,24 @@ class _CounselorPageState extends State<CounselorPage> {
                             Wrap(
                               spacing: 5,
                               runSpacing: 3,
-                              children: (c['specialties'] as List<dynamic>?)
-                                      ?.map((s) => Chip(
-                                            label: Text(
-                                              s.toString(),
-                                              style:
-                                                  const TextStyle(fontSize: 11),
+                              children:
+                                  (c['specialties'] as List<dynamic>?)
+                                      ?.map(
+                                        (s) => Chip(
+                                          label: Text(
+                                            s.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 11,
                                             ),
-                                            backgroundColor:
-                                                Colors.blue.shade50,
-                                            materialTapTargetSize:
-                                                MaterialTapTargetSize
-                                                    .shrinkWrap,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 4),
-                                          ))
+                                          ),
+                                          backgroundColor: Colors.blue.shade50,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                        ),
+                                      )
                                       .toList() ??
                                   [],
                             ),
@@ -211,13 +228,18 @@ class _CounselorPageState extends State<CounselorPage> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.access_time,
-                                        size: 15, color: Colors.grey),
+                                    const Icon(
+                                      Icons.access_time,
+                                      size: 15,
+                                      color: Colors.grey,
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       '最近可约：${c['nextSoonestSlot'].toString().substring(11, 16)}',
                                       style: const TextStyle(
-                                          fontSize: 12, color: Colors.grey),
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -226,8 +248,7 @@ class _CounselorPageState extends State<CounselorPage> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('已预约 ${c['name']}'),
-                                        duration:
-                                            const Duration(seconds: 1),
+                                        duration: const Duration(seconds: 1),
                                       ),
                                     );
                                   },
@@ -239,8 +260,10 @@ class _CounselorPageState extends State<CounselorPage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  child: const Text('预约',
-                                      style: TextStyle(fontSize: 13)),
+                                  child: const Text(
+                                    '预约',
+                                    style: TextStyle(fontSize: 13),
+                                  ),
                                 ),
                               ],
                             ),

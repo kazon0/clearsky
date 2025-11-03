@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/auth_view_model.dart';
-import 'regist_page.dart';
+import 'login_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final _idController = TextEditingController();
+  final _nameController = TextEditingController();
   final _pwdController = TextEditingController();
+  final _confirmController = TextEditingController();
   final authVM = AuthViewModel();
 
   @override
@@ -24,40 +26,9 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               Container(
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFFEAF2F3),
-                      Color.fromARGB(255, 252, 246, 237),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SizedBox(
-                  height: 220,
-                  child: ShaderMask(
-                    shaderCallback: (rect) {
-                      return const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.white, Colors.transparent],
-                        stops: [0.55, 1.0],
-                      ).createShader(rect);
-                    },
-                    blendMode: BlendMode.dstIn,
-                    child: Opacity(
-                      opacity: 0.5,
-                      child: Image.asset(
-                        'assets/images/musicbg.jpg',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/bg_register.png'),
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
@@ -83,44 +54,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundColor: Colors.white,
-                            backgroundImage: const AssetImage(
-                              'assets/images/icon.png',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                '晴空心理',
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(255, 86, 146, 202),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                '关心你的每一次情绪波动',
-                                style: TextStyle(
-                                  color: Colors.grey.shade700,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 60),
-
-                      // --- 登录表单 ---
+                      // --- 注册表单 ---
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: Column(
@@ -130,16 +64,29 @@ class _LoginPageState extends State<LoginPage> {
                               decoration: InputDecoration(
                                 labelText: '学号',
                                 prefixIcon: const Icon(
-                                  Icons.person_outline,
+                                  Icons.perm_identity,
                                   color: Color(0xFF6F99BF),
                                 ),
-                                filled: false, // 不要填充背景色
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 18),
+                            TextField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                labelText: '姓名',
+                                prefixIcon: const Icon(
+                                  Icons.badge_outlined,
+                                  color: Color(0xFF6F99BF),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
                             TextField(
                               controller: _pwdController,
                               obscureText: true,
@@ -149,26 +96,23 @@ class _LoginPageState extends State<LoginPage> {
                                   Icons.lock_outline,
                                   color: Color(0xFF6F99BF),
                                 ),
-                                filled: false,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {},
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
+                            const SizedBox(height: 18),
+                            TextField(
+                              controller: _confirmController,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                labelText: '确认密码',
+                                prefixIcon: const Icon(
+                                  Icons.lock_person_outlined,
+                                  color: Color(0xFF6F99BF),
                                 ),
-                                child: Text(
-                                  '忘记密码？',
-                                  style: TextStyle(
-                                    color: Color.fromARGB(255, 123, 162, 199),
-                                    fontSize: 14,
-                                  ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
@@ -176,23 +120,33 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 30),
 
-                      // --- 登录按钮 ---
+                      // --- 注册按钮 ---
                       authVM.isLoading
                           ? const CircularProgressIndicator()
                           : SizedBox(
-                              width: double.infinity,
+                              width: 300,
                               child: ElevatedButton(
                                 onPressed: () async {
-                                  final ok = await authVM.login(
+                                  if (_pwdController.text !=
+                                      _confirmController.text) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('两次密码不一致')),
+                                    );
+                                    return;
+                                  }
+
+                                  final ok = await authVM.register(
                                     _idController.text.trim(),
+                                    _nameController.text.trim(),
                                     _pwdController.text.trim(),
                                   );
+
                                   if (ok && mounted) Navigator.pop(context);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color.fromARGB(
+                                  backgroundColor: const Color.fromARGB(
                                     255,
                                     121,
                                     166,
@@ -208,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                                   elevation: 3,
                                 ),
                                 child: const Text(
-                                  '登录',
+                                  '注册',
                                   style: TextStyle(
                                     fontSize: 18,
                                     letterSpacing: 0.5,
@@ -217,14 +171,13 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                      // --- 登录提示 ---
                       if (authVM.message != null)
                         Text(
                           authVM.message!,
                           style: TextStyle(
-                            color: authVM.message == '登录成功'
+                            color: authVM.message == '注册成功'
                                 ? Colors.green
                                 : Colors.red,
                           ),
@@ -232,28 +185,32 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 16),
 
-                      // --- 底部注册提示 ---
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            '还没有账号？',
-                            style: TextStyle(color: Colors.black54),
+                            '已有账号？',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           TextButton(
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const RegisterPage(),
-                                ), //导航到注册页面
+                                  builder: (_) => const LoginPage(),
+                                ),
                               );
                             },
-                            child: Text(
-                              '立即注册',
+                            child: const Text(
+                              '去登录',
                               style: TextStyle(
                                 color: Color.fromARGB(255, 121, 162, 200),
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
                               ),
                             ),
                           ),

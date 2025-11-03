@@ -10,7 +10,6 @@ class AssessmentPage extends StatefulWidget {
 }
 
 class _AssessmentPageState extends State<AssessmentPage> {
-  /// 题库：每个维度 1 题（可以后面扩展）
   final List<Question> questions = [
     Question(
       text: '我经常感到紧张或不安。',

@@ -37,4 +37,31 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
     return false;
   }
+
+  //注册逻辑
+  Future<bool> register(String studentId, String name,String password) async {
+    isLoading = true;
+    message = null;
+    notifyListeners();
+
+    try {
+      final res = await AuthService.register(studentId, password, name);
+
+      final code = res['code'];
+      if (code == 201) {
+        message = '注册成功，请登录';
+        isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        message = res['message'] ?? '注册失败';
+      }
+    } catch (e) {
+      message = '请求出错：$e';
+    }
+
+    isLoading = false;
+    notifyListeners();
+    return false;
+  }
 }

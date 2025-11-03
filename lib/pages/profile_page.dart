@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/user_view_model.dart';
-import 'login_page.dart';
+import 'profile_guest_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -29,85 +29,9 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         }
 
-if (!userVM.isLoggedIn) {
-  return Scaffold(
-    
-    backgroundColor: const Color(0xFFFFFCF7),
-    body: Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ClipRRect(
-  borderRadius: BorderRadius.circular(16), // 圆角半径
-  child: Image.asset(
-    'assets/images/musicbg.jpg',
-    fit: BoxFit.cover, // 填充方式
-  ),
-),
-            const SizedBox(height: 30),
-
-            const Text(
-              '你还没有登录',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF6F99BF),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '登录后即可查看你的个人信息与测评记录',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                ).then((_) => userVM.checkLoginAndLoad());
-              },
-              icon: const Icon(Icons.login),
-              label: const Text(
-                '立即登录',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 132, 171, 208),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 60, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 3,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                '没有账号？去注册',
-                style: TextStyle(
-                  color: Color(0xFF6F99BF),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
+        if (!userVM.isLoggedIn) {
+          return const ProfileGuestPage();
+        }
         final user = userVM.userInfo!;
         return Scaffold(
           backgroundColor: const Color(0xFFFFFCF7),
@@ -139,10 +63,7 @@ if (!userVM.isLoggedIn) {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Colors.blue.shade100,
-                          Colors.blue.shade50,
-                        ],
+                        colors: [Colors.blue.shade100, Colors.blue.shade50],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -153,8 +74,9 @@ if (!userVM.isLoggedIn) {
                         CircleAvatar(
                           radius: 36,
                           backgroundColor: Colors.white,
-                          backgroundImage:
-                              const AssetImage('assets/images/icon.png'),
+                          backgroundImage: const AssetImage(
+                            'assets/images/icon.png',
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -179,9 +101,11 @@ if (!userVM.isLoggedIn) {
                               const SizedBox(height: 10),
                               Row(
                                 children: [
-                                  Icon(Icons.badge_outlined,
-                                      size: 16,
-                                      color: Color(0xFF6F99BF)),
+                                  Icon(
+                                    Icons.badge_outlined,
+                                    size: 16,
+                                    color: Color(0xFF6F99BF),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '学号 ${user['studentId']}',
@@ -194,7 +118,7 @@ if (!userVM.isLoggedIn) {
                               ),
                             ],
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -206,18 +130,24 @@ if (!userVM.isLoggedIn) {
                     elevation: 8,
                     shadowColor: Colors.black.withOpacity(0.15),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 12),
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
                       child: Column(
                         children: [
                           _infoRow(Icons.email_outlined, '邮箱', user['email']),
                           _divider(),
                           _infoRow(Icons.wc_outlined, '性别', user['gender']),
                           _divider(),
-                          _infoRow(Icons.calendar_today_outlined, '入学时间',
-                              user['joinDate']),
+                          _infoRow(
+                            Icons.calendar_today_outlined,
+                            '入学时间',
+                            user['joinDate'],
+                          ),
                         ],
                       ),
                     ),
@@ -230,10 +160,13 @@ if (!userVM.isLoggedIn) {
                     elevation: 8,
                     shadowColor: Colors.black.withOpacity(0.15),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 8),
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
                       child: Column(
                         children: [
                           _featureItem(Icons.edit_note, '修改个人信息', () {
@@ -248,11 +181,15 @@ if (!userVM.isLoggedIn) {
                             );
                           }),
                           _divider(),
-                          _featureItem(Icons.psychology_alt_outlined, '心理测评', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('进入心理测评功能')),
-                            );
-                          }),
+                          _featureItem(
+                            Icons.psychology_alt_outlined,
+                            '心理测评',
+                            () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('进入心理测评功能')),
+                              );
+                            },
+                          ),
                           _divider(),
                           _featureItem(Icons.favorite_border, '我的收藏', () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -260,21 +197,22 @@ if (!userVM.isLoggedIn) {
                             );
                           }),
                           _divider(),
-                          _featureItem(Icons.logout, '退出登录', userVM.logout,
-                              color: Colors.red.shade400),
+                          _featureItem(
+                            Icons.logout,
+                            '退出登录',
+                            userVM.logout,
+                            color: Colors.red.shade400,
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 40),
 
-                  // 小提示或页脚
+                  // 小提示
                   Text(
                     '心理健康从了解自己开始 💙',
-                    style: TextStyle(
-                      color: Colors.grey.shade500,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                   ),
                 ],
               ),
@@ -291,23 +229,21 @@ if (!userVM.isLoggedIn) {
         Icon(icon, color: Color(0xFF6F99BF)),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            '$label：$value',
-            style: const TextStyle(fontSize: 15),
-          ),
+          child: Text('$label：$value', style: const TextStyle(fontSize: 15)),
         ),
       ],
     );
   }
 
-  Widget _divider() => Divider(
-        color: Colors.grey.shade300,
-        height: 14,
-        thickness: 0.5,
-      );
+  Widget _divider() =>
+      Divider(color: Colors.grey.shade300, height: 14, thickness: 0.5);
 
-  Widget _featureItem(IconData icon, String label, VoidCallback onTap,
-      {Color? color}) {
+  Widget _featureItem(
+    IconData icon,
+    String label,
+    VoidCallback onTap, {
+    Color? color,
+  }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: color ?? Color(0xFF6F99BF)),

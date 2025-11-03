@@ -7,7 +7,7 @@ class ResourceViewModel extends ChangeNotifier {
   String selectedCategory = 'all';
   List<Map<String, dynamic>> resources = [];
 
-  /// 分类标签（可供 UI 使用）
+  /// 分类标签
   final List<Map<String, String>> categories = const [
     {'key': 'all', 'label': '全部'},
     {'key': 'article', 'label': '文章'},
@@ -25,8 +25,9 @@ class ResourceViewModel extends ChangeNotifier {
       List<Map<String, dynamic>> filtered = all;
 
       if (selectedCategory != 'all') {
-        filtered =
-            filtered.where((e) => e['category'] == selectedCategory).toList();
+        filtered = filtered
+            .where((e) => e['category'] == selectedCategory)
+            .toList();
       }
 
       if (searchKeyword.isNotEmpty) {

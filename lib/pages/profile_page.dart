@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../viewmodels/user_view_model.dart';
 import 'profile_guest_page.dart';
 
@@ -10,16 +12,18 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final userVM = UserViewModel();
-
   @override
   void initState() {
     super.initState();
-    userVM.checkLoginAndLoad();
+    Future.microtask(() {
+      final userVM = Provider.of<UserViewModel>(context, listen: false);
+      userVM.checkLoginAndLoad();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final userVM = Provider.of<UserViewModel>(context);
     return AnimatedBuilder(
       animation: userVM,
       builder: (context, _) {

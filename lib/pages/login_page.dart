@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../viewmodels/auth_view_model.dart';
 import 'regist_page.dart';
 
@@ -12,10 +14,10 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _idController = TextEditingController();
   final _pwdController = TextEditingController();
-  final authVM = AuthViewModel();
 
   @override
   Widget build(BuildContext context) {
+    final authVM = Provider.of<AuthViewModel>(context);
     return Scaffold(
       body: AnimatedBuilder(
         animation: authVM,

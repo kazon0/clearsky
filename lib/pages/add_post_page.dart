@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/community_view_model.dart';
 
 class AddPostPage extends StatefulWidget {
   const AddPostPage({super.key});
@@ -10,7 +12,9 @@ class AddPostPage extends StatefulWidget {
 }
 
 class _AddPostPageState extends State<AddPostPage> {
-  final _controller = TextEditingController();
+  final _titleController = TextEditingController();
+  final _contentController = TextEditingController();
+  bool _isAnonymous = false;
   File? _selectedImage;
 
   /// 从相册选择图片
@@ -23,27 +27,45 @@ class _AddPostPageState extends State<AddPostPage> {
   }
 
   /// 发布帖子
-  void _submit() {
-    if (_controller.text.trim().isEmpty && _selectedImage == null) return;
+  Future<void> _submit() async {
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
 
-    final newPost = {
-      "id": DateTime.now().millisecondsSinceEpoch,
-      "author": "匿名用户",
-      "avatar": "https://ui-avatars.com/api/?name=匿名用户&background=random",
-      "content": _controller.text.trim(),
-      "images": _selectedImage != null ? [_selectedImage!.path] : [],
-      "likes": 0,
-      "commentsCount": 0,
-      "isLiked": false,
-      "createdAt": DateTime.now().toIso8601String(),
-    };
+    if (title.isEmpty || content.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('标题和内容不能为空')));
+      return;
+    }
 
-    Navigator.pop(context, newPost);
+    final vm = Provider.of<CommunityViewModel>(context, listen: false);
+
+    try {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('正在发布中...')));
+
+      await vm.createPost(
+        title: title,
+        content: content,
+        isAnonymous: _isAnonymous,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('发布成功，等待审核')));
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('发布失败：$e')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCF7),
       appBar: AppBar(
@@ -66,22 +88,49 @@ class _AddPostPageState extends State<AddPostPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 标题
               TextField(
-                controller: _controller,
-                maxLines: 6,
+                controller: _titleController,
                 decoration: InputDecoration(
-                  hintText: '写点什么吧...',
+                  hintText: '请输入标题...',
                   filled: true,
-                  fillColor: Color.fromARGB(255, 240, 245, 246),
+                  fillColor: const Color.fromARGB(255, 240, 245, 246),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // 图片预览
+              // 内容
+              TextField(
+                controller: _contentController,
+                maxLines: 6,
+                decoration: InputDecoration(
+                  hintText: '写点什么吧...',
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 240, 245, 246),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 匿名开关
+              SwitchListTile(
+                title: const Text('匿名发布'),
+                activeColor: const Color(0xFF6F99BF),
+                value: _isAnonymous,
+                onChanged: (v) => setState(() => _isAnonymous = v),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 图片预览（UI 保留）
               if (_selectedImage != null)
                 Stack(
                   children: [
@@ -101,21 +150,26 @@ class _AddPostPageState extends State<AddPostPage> {
                         radius: 16,
                         backgroundColor: Colors.black54,
                         child: IconButton(
-                          icon: const Icon(Icons.close,
-                              color: Colors.white, size: 16),
-                          onPressed: () => setState(() => _selectedImage = null),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          onPressed: () =>
+                              setState(() => _selectedImage = null),
                         ),
                       ),
                     ),
                   ],
                 ),
+
               const SizedBox(height: 16),
 
-              // 选择图片按钮
+              // 添加图片按钮
               OutlinedButton.icon(
                 onPressed: _pickImage,
                 icon: const Icon(Icons.image_outlined),
-                label: const Text('添加图片'),
+                label: const Text('添加图片（暂不上传，仅预览）'),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                   side: BorderSide(color: Colors.grey.shade300),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../viewmodels/user_view_model.dart';
 import 'login_page.dart';
 import 'regist_page.dart';
@@ -12,7 +14,6 @@ class ProfileGuestPage extends StatefulWidget {
 
 class _ProfileGuestPageState extends State<ProfileGuestPage>
     with SingleTickerProviderStateMixin {
-  final userVM = UserViewModel();
   double _opacity = 0;
   double _offsetY = 40;
 
@@ -29,6 +30,7 @@ class _ProfileGuestPageState extends State<ProfileGuestPage>
 
   @override
   Widget build(BuildContext context) {
+    final userVM = Provider.of<UserViewModel>(context, listen: false);
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCF7),
       body: Stack(
@@ -99,7 +101,11 @@ class _ProfileGuestPageState extends State<ProfileGuestPage>
                             MaterialPageRoute(
                               builder: (_) => const LoginPage(),
                             ),
-                          );
+                          ).then((_) {
+                            // 登录页关闭后刷新一次
+                            debugPrint('[GuestPage] 登录页返回，准备刷新用户信息');
+                            userVM.checkLoginAndLoad();
+                          });
                         },
                         child: Row(
                           children: [

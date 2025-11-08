@@ -1,7 +1,8 @@
-import 'dart:io';
+// import 'dart:io';
 import 'package:flutter/material.dart';
 import '../viewmodels/community_view_model.dart';
 import 'add_post_page.dart';
+import 'post_detail_page.dart'; // 详情页
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -22,20 +23,33 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 243, 241, 237),
+      backgroundColor: const Color(0xFFF3F1ED),
       appBar: AppBar(
-        title: const Text('社区',
-            style: TextStyle(
-                color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold)),
-        backgroundColor: Color.fromARGB(255, 243, 241, 237),
+        title: const Text(
+          '心理社区',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: const Color(0xFFF3F1ED),
         elevation: 0.5,
         centerTitle: true,
       ),
       body: AnimatedBuilder(
         animation: vm,
         builder: (context, _) {
-          if (vm.isLoading) return const Center(child: CircularProgressIndicator());
-          if (vm.errorMessage != null) return Center(child: Text(vm.errorMessage!));
+          if (vm.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (vm.errorMessage != null) {
+            return Center(child: Text(vm.errorMessage!));
+          }
+          if (vm.posts.isEmpty) {
+            return const Center(child: Text('还没有帖子，快去发布一个吧~'));
+          }
+
           return RefreshIndicator(
             onRefresh: vm.fetchPosts,
             child: ListView.builder(
@@ -43,7 +57,17 @@ class _CommunityPageState extends State<CommunityPage> {
               itemCount: vm.posts.length,
               itemBuilder: (context, index) {
                 final post = vm.posts[index];
-                return _buildPostCard(post);
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PostDetailPage(postId: post['id']),
+                      ),
+                    );
+                  },
+                  child: _buildPostCard(post),
+                );
               },
             ),
           );
@@ -51,37 +75,40 @@ class _CommunityPageState extends State<CommunityPage> {
       ),
 
       // 右下角发帖按钮
-    floatingActionButton: Padding(
-    padding: const EdgeInsets.only(bottom: 10, right: 20),
-    child: FloatingActionButton(
-      onPressed: () async {
-        final newPost = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AddPostPage()),
-        );
-        if (newPost != null) {
-          setState(() {
-            vm.posts.insert(0, newPost);
-          });
-        }
-      },
-      backgroundColor: const Color(0xFF6F99BF),
-      child: const Icon(Icons.add, color: Colors.white),
-    ),
-  ),
-  floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10, right: 20),
+        child: FloatingActionButton(
+          backgroundColor: const Color(0xFF6F99BF),
+          child: const Icon(Icons.add, color: Colors.white),
+          onPressed: () async {
+            final newPost = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AddPostPage()),
+            );
+            if (newPost != null) {
+              vm.fetchPosts(); // 刷新列表
+            }
+          },
+        ),
+      ),
     );
   }
 
+  /// 帖子卡片
   Widget _buildPostCard(Map<String, dynamic> post) {
-    final date = DateTime.parse(post['createdAt']);
-    final formattedTime =
-        '${date.month}月${date.day}日 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final authorName = post['isAnonymous'] == true
+        ? '匿名用户'
+        : (post['authorName'] ?? '未知');
+
+    final date = DateTime.tryParse(post['createdAt'] ?? '');
+    final formattedTime = date != null
+        ? '${date.month}月${date.day}日 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
+        : '未知时间';
 
     return Card(
       color: Colors.grey.shade50,
-      elevation: 10,
-      shadowColor: Colors.black.withOpacity(0.15),
+      elevation: 8,
+      shadowColor: Colors.black.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
@@ -94,19 +121,29 @@ class _CommunityPageState extends State<CommunityPage> {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundImage: NetworkImage(post['avatar']),
+                  backgroundImage: AssetImage('assets/images/app_icon.png'),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(post['author'],
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(formattedTime,
-                          style: TextStyle(
-                              color: Colors.grey.shade600, fontSize: 12)),
+                      Text(
+                        authorName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Spacer(),
+                      Text(
+                        formattedTime,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
                     ],
                   ),
                 ),
@@ -114,18 +151,23 @@ class _CommunityPageState extends State<CommunityPage> {
             ),
 
             const SizedBox(height: 10),
-            Text(post['content'] ?? '',
-                style: const TextStyle(fontSize: 15, height: 1.4)),
-
-            // 图片（自动识别本地或网络）
-            if (post['images'] != null && post['images'].isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: _buildPostImage(post['images'][0]),
+            // 标题 + 内容摘要
+            if (post['title'] != null && post['title'].toString().isNotEmpty)
+              Text(
+                post['title'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  height: 1.3,
                 ),
               ),
+            const SizedBox(height: 4),
+            Text(
+              post['contentPreview'] ?? post['content'] ?? '',
+              style: const TextStyle(fontSize: 15, height: 1.4),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
 
             const SizedBox(height: 8),
 
@@ -137,27 +179,38 @@ class _CommunityPageState extends State<CommunityPage> {
                   children: [
                     IconButton(
                       icon: Icon(
-                        post['isLiked']
+                        post['isLiked'] == true
                             ? Icons.favorite
                             : Icons.favorite_border,
-                        color: post['isLiked'] ? Colors.red : Colors.grey,
+                        color: post['isLiked'] == true
+                            ? Colors.red
+                            : Colors.grey,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          post['isLiked'] = !post['isLiked'];
-                          post['likes'] += post['isLiked'] ? 1 : -1;
-                        });
+                      onPressed: () async {
+                        try {
+                          await vm.toggleLike(
+                            post['id'],
+                            post['isLiked'] == true,
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('操作失败：$e')));
+                        }
                       },
                     ),
-                    Text('${post['likes']}'),
+                    Text('${post['likeCount'] ?? 0}'),
                   ],
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.chat_bubble_outline,
-                        color: Colors.grey, size: 20),
+                    const Icon(
+                      Icons.chat_bubble_outline,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
                     const SizedBox(width: 4),
-                    Text('${post['commentsCount']}'),
+                    Text('${post['commentCount'] ?? 0}'),
                     const SizedBox(width: 10),
                   ],
                 ),
@@ -169,22 +222,13 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
-  /// 自动判断图片来源（本地 or 网络）
-  Widget _buildPostImage(String path) {
-    final isLocal = path.startsWith('/') || path.startsWith('file://');
-
-    return isLocal
-        ? Image.file(
-            File(path),
-            width: double.infinity,
-            height: 180,
-            fit: BoxFit.cover,
-          )
-        : Image.network(
-            path,
-            width: double.infinity,
-            height: 180,
-            fit: BoxFit.cover,
-          );
-  }
+  // /// 自动判断图片来源（本地 or 网络）
+  // Widget _buildPostImage(String path) {
+  //   final isLocal = path.startsWith('/') || path.startsWith('file://');
+  //   return isLocal
+  //       ? Image.file(File(path),
+  //           width: double.infinity, height: 180, fit: BoxFit.cover)
+  //       : Image.network(path,
+  //           width: double.infinity, height: 180, fit: BoxFit.cover);
+  // }
 }

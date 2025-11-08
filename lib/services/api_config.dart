@@ -1,4 +1,5 @@
-const String baseUrl = 'http://127.0.0.1:4523/m1/7226423-6952858-default';
+// const String baseUrl = 'http://127.0.0.1:4523/m1/7226423-6952858-default';
+const String baseUrl = 'http://localhost:8080/api/v1';
 
 Map<String, String> jsonHeaders({String? token}) => {
   'Content-Type': 'application/json',

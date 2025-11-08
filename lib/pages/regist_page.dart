@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../viewmodels/auth_view_model.dart';
 import 'login_page.dart';
 
@@ -11,13 +13,12 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _idController = TextEditingController();
-  final _nameController = TextEditingController();
   final _pwdController = TextEditingController();
   final _confirmController = TextEditingController();
-  final authVM = AuthViewModel();
 
   @override
   Widget build(BuildContext context) {
+    final authVM = Provider.of<AuthViewModel>(context);
     return Scaffold(
       body: AnimatedBuilder(
         animation: authVM,
@@ -65,20 +66,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                 labelText: '学号',
                                 prefixIcon: const Icon(
                                   Icons.perm_identity,
-                                  color: Color(0xFF6F99BF),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            TextField(
-                              controller: _nameController,
-                              decoration: InputDecoration(
-                                labelText: '姓名',
-                                prefixIcon: const Icon(
-                                  Icons.badge_outlined,
                                   color: Color(0xFF6F99BF),
                                 ),
                                 border: OutlineInputBorder(
@@ -139,7 +126,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
                                   final ok = await authVM.register(
                                     _idController.text.trim(),
-                                    _nameController.text.trim(),
                                     _pwdController.text.trim(),
                                   );
 

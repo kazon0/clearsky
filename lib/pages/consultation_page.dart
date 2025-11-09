@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../viewmodels/counselor_view_model.dart';
+import 'consultant_detail_page.dart';
+import 'my_appointments_page.dart';
 
 class CounselorPage extends StatefulWidget {
   const CounselorPage({super.key});
@@ -9,18 +12,20 @@ class CounselorPage extends StatefulWidget {
 }
 
 class _CounselorPageState extends State<CounselorPage> {
-  final vm = CounselorViewModel();
-
-  final specialties = ['全部', 'CBT', '抑郁', '焦虑', '家庭治疗', '青少年', '创伤'];
+  final specialties = ['全部', '焦虑症', '抑郁症', '家庭', '青少年', '创伤'];
 
   @override
   void initState() {
     super.initState();
-    vm.fetchCounselors();
+    Future.microtask(
+      () => context.read<CounselorViewModel>().fetchCounselors(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<CounselorViewModel>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F6F1),
       appBar: AppBar(
@@ -37,8 +42,20 @@ class _CounselorPageState extends State<CounselorPage> {
         backgroundColor: const Color(0xFFFFFCF7),
         elevation: 0.5,
         actions: [
+          // 我的预约入口
+          IconButton(
+            icon: const Icon(Icons.event_note, color: Colors.black),
+            tooltip: '我的预约',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyAppointmentsPage()),
+              );
+            },
+          ),
+          // 筛选菜单
           PopupMenuButton<String>(
-            icon: const Icon(Icons.menu, color: Colors.black),
+            icon: const Icon(Icons.filter_list, color: Colors.black),
             position: PopupMenuPosition.under,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -50,40 +67,25 @@ class _CounselorPageState extends State<CounselorPage> {
                 vm.updateSpecialty(s);
               }
             },
-            color: Colors.grey.shade50,
             itemBuilder: (context) {
               return specialties
                   .map(
                     (s) => PopupMenuItem<String>(
                       value: s,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            s,
-                            style: TextStyle(
-                              fontWeight:
-                                  (vm.selectedSpecialty == s ||
-                                      (s == '全部' &&
-                                          vm.selectedSpecialty.isEmpty))
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color:
-                                  (vm.selectedSpecialty == s ||
-                                      (s == '全部' &&
-                                          vm.selectedSpecialty.isEmpty))
-                                  ? const Color(0xFF3A6ED4)
-                                  : Colors.black87,
-                            ),
-                          ),
-                          if (vm.selectedSpecialty == s ||
-                              (s == '全部' && vm.selectedSpecialty.isEmpty))
-                            const Icon(
-                              Icons.check,
-                              color: Color(0xFF3A6ED4),
-                              size: 18,
-                            ),
-                        ],
+                      child: Text(
+                        s,
+                        style: TextStyle(
+                          fontWeight:
+                              (vm.selectedSpecialty == s ||
+                                  (s == '全部' && vm.selectedSpecialty.isEmpty))
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color:
+                              (vm.selectedSpecialty == s ||
+                                  (s == '全部' && vm.selectedSpecialty.isEmpty))
+                              ? const Color(0xFF3A6ED4)
+                              : Colors.black87,
+                        ),
                       ),
                     ),
                   )
@@ -92,185 +94,155 @@ class _CounselorPageState extends State<CounselorPage> {
           ),
         ],
       ),
-      body: AnimatedBuilder(
-        animation: vm,
-        builder: (context, _) {
-          if (vm.isLoading) {
+      body: Builder(
+        builder: (_) {
+          if (vm.isLoading && vm.counselors.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
-
-          // 筛选逻辑
-          final filteredCounselors = vm.selectedSpecialty.isEmpty
-              ? vm.counselors
-              : vm.counselors
-                    .where(
-                      (c) => (c['specialties'] as List).contains(
-                        vm.selectedSpecialty,
-                      ),
-                    )
-                    .toList();
-
-          if (filteredCounselors.isEmpty) {
+          if (vm.counselors.isEmpty) {
             return Center(
               child: Text(
-                '暂无与 "${vm.selectedSpecialty}" 相关的咨询师',
+                '暂时没有可展示的咨询师',
                 style: TextStyle(color: Colors.grey.shade600),
               ),
             );
           }
 
+          final list = vm.selectedSpecialty.isEmpty
+              ? vm.counselors
+              : vm.counselors.where((c) {
+                  final spec = (c['specialization'] ?? '') as String;
+                  return spec.contains(vm.selectedSpecialty);
+                }).toList();
+
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-            itemCount: filteredCounselors.length,
+            itemCount: list.length,
             itemBuilder: (context, index) {
-              final c = filteredCounselors[index];
-              return Card(
-                color: Colors.grey.shade50,
-                elevation: 10,
-                shadowColor: Colors.black.withOpacity(0.15),
-                margin: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: Image.asset(
-                          (c['gender'] == 'female')
-                              ? 'assets/images/woman.jpg'
-                              : 'assets/images/man.jpg',
-                          width: 52,
-                          height: 52,
-                          fit: BoxFit.cover,
+              final c = list[index];
+
+              final name = c['realName'] ?? '未命名咨询师';
+              final spec = (c['specialization'] ?? '').toString();
+              final rating = c['rating'] ?? 0.0;
+              final reviewCount = c['reviewCount'] ?? 0;
+
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ConsultantDetailPage(consultantId: c['id']),
+                    ),
+                  );
+                },
+                child: Card(
+                  color: Colors.grey.shade50,
+                  elevation: 8,
+                  shadowColor: Colors.black.withOpacity(0.1),
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 头像（本地默认）
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(30),
+                          child: Image.asset(
+                            'assets/images/man.jpg',
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 姓名 + 星级
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      c['name'] ?? '未知',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      c['title'] ?? '',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.star,
-                                      size: 18,
-                                      color: Colors.amber,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '${c['rating'] ?? '--'}',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            // 标签
-                            Wrap(
-                              spacing: 5,
-                              runSpacing: 3,
-                              children:
-                                  (c['specialties'] as List<dynamic>?)
-                                      ?.map(
-                                        (s) => Chip(
-                                          label: Text(
-                                            s.toString(),
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.blue.shade50,
-                                          materialTapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 4,
-                                          ),
+                        const SizedBox(width: 10),
+                        // 文本部分
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 名字 + 评分
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      )
-                                      .toList() ??
-                                  [],
-                            ),
-                            const SizedBox(height: 8),
-                            // 时间 + 预约按钮
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.access_time,
-                                      size: 15,
-                                      color: Colors.grey,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '最近可约：${c['nextSoonestSlot'].toString().substring(11, 16)}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                FilledButton(
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('已预约 ${c['name']}'),
-                                        duration: const Duration(seconds: 1),
+                                      Text(
+                                        spec.isEmpty ? '擅长方向：未填写' : '擅长：$spec',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: const Color(0xFF6F99BF),
-                                    minimumSize: const Size(60, 30),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
+                                    ],
                                   ),
-                                  child: const Text(
-                                    '预约',
-                                    style: TextStyle(fontSize: 13),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        size: 18,
+                                        color: Colors.amber,
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        rating.toStringAsFixed(1),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' ($reviewCount)',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                c['introduction'] ?? '暂无简介',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  '点击查看可预约时间',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

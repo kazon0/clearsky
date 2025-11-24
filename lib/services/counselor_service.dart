@@ -132,14 +132,20 @@ class CounselorService {
     String? startDate,
     String? endDate,
   }) async {
+    final now = DateTime.now();
+
+    final start =
+        startDate ??
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final end =
+        endDate ??
+        "${now.add(const Duration(days: 7)).year}-${now.add(const Duration(days: 7)).month.toString().padLeft(2, '0')}-${now.add(const Duration(days: 7)).day.toString().padLeft(2, '0')}";
+
     final result = await _request(
       'GET',
       '/consultants/$consultantId/schedules',
       withAuth: true,
-      query: {
-        if (startDate != null) 'startDate': startDate,
-        if (endDate != null) 'endDate': endDate,
-      },
+      query: {'startDate': start, 'endDate': end},
     );
 
     final list = List<Map<String, dynamic>>.from(result['_list'] ?? []);

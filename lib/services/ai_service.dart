@@ -64,4 +64,29 @@ class AiService {
     final data = json.decode(response.body);
     return data;
   }
+
+  /// 向人工咨询师发送消息
+  static Future<Map<String, dynamic>> sendHumanMessage(
+    int conversationId,
+    String content,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse(
+      '$baseUrl/ai/conversations/$conversationId/human-messages',
+    );
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'content': content, 'messageType': 'TEXT'}),
+    );
+
+    final data = json.decode(response.body);
+    return data;
+  }
 }

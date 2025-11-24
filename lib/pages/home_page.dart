@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../viewmodels/user_view_model.dart';
 import 'ai_chat_page.dart';
-import 'test_page.dart';
+import 'test_list_page.dart';
 import 'resource_page.dart';
 import 'community_page.dart';
 
@@ -155,7 +155,7 @@ class _HomePageState extends State<HomePage> {
                             context,
                             '心理测评',
                             'assets/images/test.jpg',
-                            const AssessmentPage(),
+                            const TestListPage(),
                             isBlue: true,
                           ),
                           _buildSoftCard(

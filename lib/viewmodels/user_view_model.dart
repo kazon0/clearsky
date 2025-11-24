@@ -60,6 +60,30 @@ class UserViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> updateUserInfo({
+    required String realName,
+    required String email,
+    required String phone,
+    required String gender,
+  }) async {
+    try {
+      final res = await UserService.updateUserInfo({
+        "realName": realName,
+        "email": email,
+        "phone": phone,
+        "gender": gender,
+      });
+
+      if (res['code'] == 200) {
+        userInfo = res['data'];
+        notifyListeners();
+        return true;
+      }
+    } catch (_) {}
+
+    return false;
+  }
+
   /// 时间问候
   String _getGreeting() {
     final hour = DateTime.now().hour;

@@ -8,6 +8,7 @@ import '../services/api_config.dart';
 class AiChatViewModel extends ChangeNotifier {
   bool isLoading = false;
   bool isAiTyping = false;
+  bool isHumanConsult = false; // 是否当前会话已被人工接管
   String currentTitle = 'AI 心理陪伴';
 
   int? conversationId;
@@ -44,12 +45,11 @@ class AiChatViewModel extends ChangeNotifier {
       prefs.setInt('lastConversationId', conversationId!);
 
       messages.clear();
-      messages.add({'text': '你好呀～我是晴空AI 🌟 可以和我聊聊你的心情吗？', 'isUser': false});
 
       await loadConversationList();
       notifyListeners();
     } else {
-      messages.add({'text': '初始化失败：${res['message']}', 'isUser': false});
+      //messages.add({'text': '初始化失败：${res['message']}', 'isUser': false});
       notifyListeners();
     }
   }
@@ -57,6 +57,7 @@ class AiChatViewModel extends ChangeNotifier {
   /// 加载单个会话详情
   Future<void> loadConversationDetail(int id) async {
     isLoading = true;
+    isHumanConsult = false;
     notifyListeners();
 
     try {
@@ -64,6 +65,15 @@ class AiChatViewModel extends ChangeNotifier {
       if (res['code'] == 200) {
         conversationId = res['data']['id'];
         currentTitle = res['data']['title'] ?? 'AI 心理陪伴';
+
+        final esc = res['data']['escalatedTo'];
+
+        if (esc != null && esc != 0) {
+          isHumanConsult = true;
+        } else {
+          isHumanConsult = false;
+        }
+
         final list = res['data']['messages'] as List<dynamic>;
         messages = list
             .map(
@@ -85,7 +95,7 @@ class AiChatViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 发送消息
+  /// 发送消息（自动区分 AI / 人工）
   Future<void> sendMessage(String content) async {
     if (conversationId == null || content.trim().isEmpty) return;
 
@@ -96,12 +106,31 @@ class AiChatViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final res = await AiService.sendMessage(conversationId!, content);
-      if (res['code'] == 200) {
-        final aiReply = res['data']['content'];
-        messages.add({'text': aiReply, 'isUser': false});
+      Map<String, dynamic> res;
+
+      if (isHumanConsult) {
+        // 人工咨询模式
+        res = await AiService.sendHumanMessage(conversationId!, content);
       } else {
-        messages.add({'text': 'AI回复失败：${res['message']}', 'isUser': false});
+        // AI 模式
+        res = await AiService.sendMessage(conversationId!, content);
+      }
+
+      if (res['code'] == 200) {
+        final reply = res['data']['content'];
+        final risk = res['data']['riskLevel']; // 后端会返回的风险等级
+
+        messages.add({'text': reply, 'isUser': false});
+
+        // 自动切换为人工模式
+        if (risk == "HIGH" || risk == "CRITICAL") {
+          isHumanConsult = true;
+
+          // 给用户一个提示消息
+          messages.add({'text': '⚠ 当前对话已升级，由人工咨询师继续为您服务。', 'isUser': false});
+        }
+      } else {
+        messages.add({'text': '消息发送失败：${res['message']}', 'isUser': false});
       }
     } catch (e) {
       messages.add({'text': '网络异常：$e', 'isUser': false});

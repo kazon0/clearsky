@@ -1,0 +1,123 @@
+import 'package:flutter/foundation.dart';
+import '../services/test_service.dart';
+
+class AssessmentViewModel extends ChangeNotifier {
+  bool isLoading = false;
+  String? errorMessage;
+
+  // 测试列表数据
+  List<Map<String, dynamic>> testList = [];
+
+  // 测试题目与作答数据
+  List<Map<String, dynamic>> questions = [];
+  Map<int, int> answers = {};
+  Map<String, dynamic>? report;
+
+  // 当前题目索引
+  int currentIndex = 0;
+
+  /// 获取所有可用的测试列表
+  Future<void> fetchTests() async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final data = await TestService.getTests();
+      testList = List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// 加载指定测试的题目
+  Future<void> loadQuestions(int testId) async {
+    isLoading = true;
+
+    // 重置
+    currentIndex = 0;
+    answers.clear();
+
+    notifyListeners();
+    try {
+      final data = await TestService.getQuestions(testId);
+
+      final rawQuestions = List<Map<String, dynamic>>.from(
+        data['questions'] ?? [],
+      );
+
+      questions = rawQuestions.map((q) {
+        return {
+          ...q,
+
+          /// question 兼容 content
+          'question': q['question'] ?? q['content'] ?? '',
+
+          /// options 兼容 text / label, score / value
+          'options': (q['options'] ?? []).map((o) {
+            return {
+              ...o,
+              'text': o['text'] ?? o['label'] ?? '',
+              'score':
+                  o['score'] ??
+                  int.tryParse(o['value']?.toString() ?? '0') ??
+                  0,
+            };
+          }).toList(),
+        };
+      }).toList();
+    } catch (e) {
+      errorMessage = "加载题目失败：$e";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// 选择题目答案
+  void selectAnswer(int index, int score) {
+    answers[index] = score;
+    notifyListeners();
+  }
+
+  /// 下一题
+  void nextQuestion() {
+    if (currentIndex < questions.length - 1) {
+      currentIndex++;
+      notifyListeners();
+    }
+  }
+
+  /// 上一题
+  void previousQuestion() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      notifyListeners();
+    }
+  }
+
+  /// 提交答案，生成报告
+  Future<void> submit(int testId) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      final formattedAnswers = answers.entries.map((e) {
+        return {
+          'questionId': questions[e.key]['id'],
+          'selectedOption': e.value.toString(),
+        };
+      }).toList();
+
+      report = await TestService.submitAnswers(
+        testId: testId,
+        answers: formattedAnswers,
+      );
+      print("测评报告 result = $report");
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+}

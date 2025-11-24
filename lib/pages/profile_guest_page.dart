@@ -21,6 +21,7 @@ class _ProfileGuestPageState extends State<ProfileGuestPage>
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
       setState(() {
         _opacity = 1;
         _offsetY = 0;

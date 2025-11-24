@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../viewmodels/user_view_model.dart';
 import 'profile_guest_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -24,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final userVM = Provider.of<UserViewModel>(context);
+
     return AnimatedBuilder(
       animation: userVM,
       builder: (context, _) {
@@ -36,7 +37,14 @@ class _ProfilePageState extends State<ProfilePage> {
         if (!userVM.isLoggedIn) {
           return const ProfileGuestPage();
         }
+
         final user = userVM.userInfo!;
+        final avatarUrl = user['avatarUrl'];
+        final validAvatar =
+            avatarUrl != null &&
+            avatarUrl.toString().isNotEmpty &&
+            avatarUrl.toString().startsWith("http");
+
         return Scaffold(
           backgroundColor: const Color(0xFFFFFCF7),
           appBar: AppBar(
@@ -49,9 +57,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            centerTitle: false,
-            elevation: 0,
             backgroundColor: const Color(0xFFFFFCF7),
+            elevation: 0,
+            centerTitle: false,
           ),
           body: RefreshIndicator(
             onRefresh: userVM.checkLoginAndLoad,
@@ -61,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 顶部个人信息卡
+                  // ==== 顶部个人卡片 ====
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -78,41 +86,46 @@ class _ProfilePageState extends State<ProfilePage> {
                         CircleAvatar(
                           radius: 36,
                           backgroundColor: Colors.white,
-                          backgroundImage: const AssetImage(
-                            'assets/images/icon.png',
-                          ),
+                          backgroundImage: validAvatar
+                              ? NetworkImage(avatarUrl)
+                              : const AssetImage('assets/images/icon.png'),
                         ),
+
                         const SizedBox(width: 16),
+
+                        // 用户基本信息
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                user['name'] ?? '未命名',
+                                user['realName']?.isNotEmpty == true
+                                    ? user['realName']
+                                    : '默认用户',
                                 style: const TextStyle(
-                                  fontSize: 22,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 8),
                               Text(
-                                '${user['major']} · ${user['grade']}',
+                                '学号：${user['username']}',
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.badge_outlined,
+                                  const Icon(
+                                    Icons.calendar_today,
                                     size: 16,
                                     color: Color(0xFF6F99BF),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 3),
                                   Text(
-                                    '学号 ${user['studentId']}',
+                                    "注册时间：${_formatDate(user['createdAt'])}",
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.grey.shade600,
@@ -126,9 +139,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
-                  // 详细信息卡
+                  // ==== 详细信息卡片 ====
                   Card(
                     color: Colors.grey.shade50,
                     elevation: 8,
@@ -139,33 +153,38 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
-                        vertical: 12,
+                        vertical: 10,
                       ),
                       child: Column(
                         children: [
-                          _infoRow(Icons.email_outlined, '邮箱', user['email']),
-                          _divider(),
-                          _infoRow(Icons.wc_outlined, '性别', user['gender']),
+                          _infoRow(
+                            Icons.email_outlined,
+                            '邮箱',
+                            user['email'] ?? '未填写',
+                          ),
                           _divider(),
                           _infoRow(
-                            Icons.calendar_today_outlined,
-                            '入学时间',
-                            user['joinDate'],
+                            Icons.wc_outlined,
+                            '性别',
+                            genderMapToCN[user['gender']] ?? '未填写',
+                          ),
+                          _divider(),
+                          _infoRow(
+                            Icons.phone_android,
+                            '手机号',
+                            user['phone'] ?? '未填写',
                           ),
                         ],
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
 
-                  // 大功能卡片区域
-                  Card(
+                  // ==== 功能区域 ====
+                  Material(
                     color: Colors.grey.shade50,
-                    elevation: 8,
-                    shadowColor: Colors.black.withOpacity(0.15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
@@ -174,32 +193,24 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         children: [
                           _featureItem(Icons.edit_note, '修改个人信息', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('修改信息功能待实现')),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfilePage(),
+                              ),
                             );
                           }),
+
                           _divider(),
-                          _featureItem(Icons.analytics_outlined, '测试报告', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('打开测试报告页')),
-                            );
-                          }),
+                          _featureItem(Icons.analytics_outlined, '测试报告', () {}),
                           _divider(),
                           _featureItem(
                             Icons.psychology_alt_outlined,
                             '心理测评',
-                            () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('进入心理测评功能')),
-                              );
-                            },
+                            () {},
                           ),
                           _divider(),
-                          _featureItem(Icons.favorite_border, '我的收藏', () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('查看收藏内容')),
-                            );
-                          }),
+                          _featureItem(Icons.favorite_border, '我的收藏', () {}),
                           _divider(),
                           _featureItem(
                             Icons.logout,
@@ -211,9 +222,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
 
-                  // 小提示
+                  const SizedBox(height: 40),
                   Text(
                     '心理健康从了解自己开始 💙',
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
@@ -227,15 +237,26 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // =================
+  // 工具函数
+  // =================
+  static String _formatDate(String? date) {
+    if (date == null) return '未知';
+    return date.substring(0, 10);
+  }
+
   Widget _infoRow(IconData icon, String label, dynamic value) {
-    return Row(
-      children: [
-        Icon(icon, color: Color(0xFF6F99BF)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text('$label：$value', style: const TextStyle(fontSize: 15)),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF6F99BF)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text('$label：$value', style: const TextStyle(fontSize: 15)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -248,12 +269,32 @@ class _ProfilePageState extends State<ProfilePage> {
     VoidCallback onTap, {
     Color? color,
   }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: color ?? Color(0xFF6F99BF)),
-      title: Text(label, style: const TextStyle(fontSize: 16)),
-      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-      onTap: onTap,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        highlightColor: const Color.fromARGB(
+          255,
+          238,
+          243,
+          247,
+        ).withOpacity(0.6),
+        splashColor: const Color.fromARGB(255, 234, 239, 242).withOpacity(0.3),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            children: [
+              Icon(icon, color: color ?? const Color(0xFF6F99BF)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(label, style: const TextStyle(fontSize: 16)),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

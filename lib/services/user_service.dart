@@ -57,4 +57,24 @@ class UserService {
       throw Exception("更新失败：${response.statusCode}");
     }
   }
+
+  static Future<bool> updateAvatar(String avatarUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('$baseUrl/users/avatar');
+    final response = await http.post(
+      url,
+      headers: jsonHeaders(token: token),
+      body: jsonEncode({"avatarUrl": avatarUrl}),
+    );
+
+    debugPrint("[Avatar] 状态码: ${response.statusCode}");
+    debugPrint("[Avatar] 响应内容: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  }
 }

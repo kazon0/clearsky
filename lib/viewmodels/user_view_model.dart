@@ -84,6 +84,15 @@ class UserViewModel extends ChangeNotifier {
     return false;
   }
 
+  Future<bool> updateAvatar(String avatarUrl) async {
+    final success = await UserService.updateAvatar(avatarUrl);
+    if (success) {
+      userInfo?['avatarUrl'] = avatarUrl; // 同步到本地
+      notifyListeners();
+    }
+    return success;
+  }
+
   /// 时间问候
   String _getGreeting() {
     final hour = DateTime.now().hour;

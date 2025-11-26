@@ -39,11 +39,6 @@ class _ProfilePageState extends State<ProfilePage> {
         }
 
         final user = userVM.userInfo!;
-        final avatarUrl = user['avatarUrl'];
-        final validAvatar =
-            avatarUrl != null &&
-            avatarUrl.toString().isNotEmpty &&
-            avatarUrl.toString().startsWith("http");
 
         return Scaffold(
           backgroundColor: const Color(0xFFFFFCF7),
@@ -69,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // ==== 顶部个人卡片 ====
+                  // 顶部个人卡片
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -86,9 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         CircleAvatar(
                           radius: 36,
                           backgroundColor: Colors.white,
-                          backgroundImage: validAvatar
-                              ? NetworkImage(avatarUrl)
-                              : const AssetImage('assets/images/icon.png'),
+                          backgroundImage: _localAvatar(user['avatarUrl']),
                         ),
 
                         const SizedBox(width: 16),
@@ -142,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 20),
 
-                  // ==== 详细信息卡片 ====
+                  // 详细信息卡片
                   Card(
                     color: Colors.grey.shade50,
                     elevation: 8,
@@ -262,6 +255,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _divider() =>
       Divider(color: Colors.grey.shade300, height: 14, thickness: 0.5);
+
+  ImageProvider _localAvatar(String? path) {
+    if (path == null || path.isEmpty) {
+      return const AssetImage('assets/images/avatar1.jpg');
+    }
+
+    if (path.startsWith("assets/")) {
+      return AssetImage(path);
+    }
+
+    // 其他意外值全部 fallback
+    return const AssetImage('assets/images/avatar1.jpg');
+  }
 
   Widget _featureItem(
     IconData icon,

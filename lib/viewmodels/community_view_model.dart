@@ -65,8 +65,7 @@ class CommunityViewModel extends ChangeNotifier {
     try {
       await CommunityService.likePost(
         postId: postId,
-        token: token,
-        isLike: !isCurrentlyLiked,
+        isLiked: isCurrentlyLiked,
       );
 
       // 本地更新 UI

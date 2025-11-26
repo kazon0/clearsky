@@ -82,14 +82,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 作者 + 时间
-              // 作者 + 时间
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 22,
-                    backgroundImage: AssetImage('assets/images/app_icon.png'),
+                    backgroundImage: _getAvatarImage(post),
                   ),
+
                   const SizedBox(width: 12),
                   Expanded(
                     child: Row(
@@ -200,8 +199,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       final commenter = comment['isAnonymous'] == true
                           ? '匿名用户'
                           : (comment['authorName'] ?? '未知用户');
-                      final avatar =
-                          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(commenter)}&background=random';
                       final cTime = DateTime.tryParse(
                         comment['createdAt'] ?? '',
                       );
@@ -211,7 +208,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundImage: NetworkImage(avatar),
+                          radius: 22,
+                          backgroundImage: _getCommentAvatar(comment),
                         ),
                         title: Text(
                           commenter,
@@ -293,5 +291,28 @@ class _PostDetailPageState extends State<PostDetailPage> {
         ),
       ),
     );
+  }
+
+  ImageProvider _getCommentAvatar(Map<String, dynamic> comment) {
+    if (comment['isAnonymous'] == true) {
+      return const AssetImage('assets/images/app_icon.png');
+    }
+
+    if (comment['authorAvatar'] != null &&
+        comment['authorAvatar'].toString().isNotEmpty) {
+      return AssetImage(comment['authorAvatar']);
+    }
+    return const AssetImage('assets/images/app_icon.png');
+  }
+
+  ImageProvider _getAvatarImage(Map<String, dynamic> data) {
+    if (data['isAnonymous'] == true) {
+      return const AssetImage('assets/images/app_icon.png');
+    }
+    if (data['authorAvatar'] != null &&
+        data['authorAvatar'].toString().isNotEmpty) {
+      return AssetImage(data['authorAvatar']);
+    }
+    return const AssetImage('assets/images/app_icon.png');
   }
 }

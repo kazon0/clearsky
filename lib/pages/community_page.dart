@@ -121,8 +121,13 @@ class _CommunityPageState extends State<CommunityPage> {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundImage: AssetImage('assets/images/app_icon.png'),
+                  backgroundImage: post['isAnonymous'] == true
+                      ? const AssetImage('assets/images/app_icon.png')
+                      : (post['authorAvatar'] != null
+                            ? AssetImage(post['authorAvatar'])
+                            : const AssetImage('assets/images/app_icon.png')),
                 ),
+
                 const SizedBox(width: 12),
                 Expanded(
                   child: Row(
@@ -221,14 +226,4 @@ class _CommunityPageState extends State<CommunityPage> {
       ),
     );
   }
-
-  // /// 自动判断图片来源（本地 or 网络）
-  // Widget _buildPostImage(String path) {
-  //   final isLocal = path.startsWith('/') || path.startsWith('file://');
-  //   return isLocal
-  //       ? Image.file(File(path),
-  //           width: double.infinity, height: 180, fit: BoxFit.cover)
-  //       : Image.network(path,
-  //           width: double.infinity, height: 180, fit: BoxFit.cover);
-  // }
 }

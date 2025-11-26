@@ -69,9 +69,7 @@ class _AIChatPageState extends State<AIChatPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      vm.isAiTyping
-                          ? '${vm.currentTitle} · 正在输入中...'
-                          : vm.currentTitle,
+                      vm.isAiTyping ? '正在输入中...' : vm.currentTitle,
                       style: const TextStyle(color: Colors.black87),
                     ),
                     const Icon(Icons.arrow_drop_down, color: Colors.black54),

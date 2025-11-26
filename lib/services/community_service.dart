@@ -151,18 +151,23 @@ class CommunityService {
     print('评论成功');
   }
 
-  /// 点赞 / 取消点赞
+  //点赞
   static Future<void> likePost({
     required int postId,
-    required String token,
-    bool isLike = true,
+    required bool isLiked, // 当前是否已点赞
   }) async {
-    final action = isLike ? 'LIKE' : 'UNLIKE';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final action = isLiked ? 'CANCEL' : 'LIKE';
+
     final url = Uri.parse(
-      '$baseUrl/community/posts/$postId/like?action=$action',
-    );
+      '$baseUrl/community/posts/$postId/like',
+    ).replace(queryParameters: {'action': action});
 
     print('[POST] $url');
+    print('action=$action, isLiked=$isLiked');
+
     final response = await http.post(
       url,
       headers: {
@@ -173,10 +178,11 @@ class CommunityService {
 
     print('状态码: ${response.statusCode}');
     print('响应体: ${response.body}');
+
     final decoded = jsonDecode(response.body);
 
     if (response.statusCode == 200 && decoded['code'] == 200) {
-      print('点赞操作成功：$action');
+      print('操作成功 $action');
     } else {
       throw Exception(decoded['message'] ?? '点赞操作失败');
     }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -10,16 +11,17 @@ class AiChatViewModel extends ChangeNotifier {
   bool isAiTyping = false;
 
   bool isHumanConsult = false; // 已被接管
-  bool isWaiting = false; // 高风险等待管理员接管
+  bool isWaiting = false; // 正在等待接管
   bool isCompleted = false; // 对话已结束
 
+  Timer? statusTimer; // 定时器（每秒检查一次是否被接管）
   String currentTitle = 'AI 心理陪伴';
 
   int? conversationId;
   List<Map<String, dynamic>> messages = [];
   List<dynamic> conversations = [];
 
-  /// 初始化：加载上次对话或创建新对话
+  /// 初始化
   Future<void> initChat() async {
     isLoading = true;
     notifyListeners();
@@ -41,7 +43,6 @@ class AiChatViewModel extends ChangeNotifier {
   /// 创建新会话
   Future<void> createConversation(String title) async {
     final res = await AiService.createConversation(title);
-
     if (res['code'] == 200) {
       conversationId = res['data']['conversationId'];
       currentTitle = title;
@@ -50,16 +51,17 @@ class AiChatViewModel extends ChangeNotifier {
       prefs.setInt('lastConversationId', conversationId!);
 
       messages.clear();
-      isHumanConsult = false;
-      isWaiting = false;
-      isCompleted = false;
-
-      await loadConversationList();
-      notifyListeners();
-    } else {
-      messages.add({'text': '初始化失败：${res['message']}', 'isUser': false});
+      _resetStatus();
       notifyListeners();
     }
+  }
+
+  /// 重置状态
+  void _resetStatus() {
+    isHumanConsult = false;
+    isWaiting = false;
+    isCompleted = false;
+    statusTimer?.cancel();
   }
 
   /// 加载会话详情
@@ -69,28 +71,14 @@ class AiChatViewModel extends ChangeNotifier {
 
     try {
       final res = await AiService.getConversationDetail(id);
-
       if (res['code'] == 200) {
         final data = res['data'];
-
         conversationId = data['id'];
         currentTitle = data['title'] ?? 'AI 心理陪伴';
 
-        // 根据状态判断
-        final status = data['status'];
+        _applyStatus(data);
 
-        isHumanConsult = status == 'ESCALATED';
-        isCompleted = status == 'COMPLETED';
-
-        // 高风险但还没接管 = 等待接管
-        final risk = data['riskLevel'];
-        if (!isHumanConsult && !isCompleted && risk == "CRITICAL") {
-          isWaiting = true;
-        } else {
-          isWaiting = false;
-        }
-
-        // 加载历史消息
+        // 历史消息
         final list = data['messages'] as List<dynamic>;
         messages = list
             .map(
@@ -104,32 +92,74 @@ class AiChatViewModel extends ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         prefs.setInt('lastConversationId', id);
       }
-    } catch (e) {
-      messages.add({'text': '加载历史消息失败：$e', 'isUser': false});
-    }
+    } catch (_) {}
 
     isLoading = false;
     notifyListeners();
   }
 
-  /// 发送消息（区分 AI / 人工 / 等待接管 / 已结束）
+  /// 应用状态
+  void _applyStatus(Map<String, dynamic> data) {
+    final status = data['status'];
+    final risk = data['riskLevel'];
+
+    isCompleted = status == 'COMPLETED';
+    isHumanConsult = status == 'ESCALATED';
+
+    // 触发等待状态（但允许继续与 AI 聊天）
+    if (!isHumanConsult && !isCompleted && risk == 'CRITICAL') {
+      isWaiting = true;
+      _startWaitingMonitor(); // 开始轮询接管状态
+    }
+
+    // 已接管 → 停止轮询
+    if (isHumanConsult) {
+      isWaiting = false;
+      statusTimer?.cancel();
+    }
+  }
+
+  /// 启动 1秒定时器检查是否已经被接管
+  void _startWaitingMonitor() {
+    statusTimer?.cancel();
+    statusTimer = Timer.periodic(Duration(seconds: 1), (_) async {
+      if (conversationId == null) return;
+      final res = await AiService.getConversationDetail(conversationId!);
+      if (res['code'] == 200) {
+        final status = res['data']['status'];
+
+        // 被接管！
+        if (status == 'ESCALATED') {
+          isHumanConsult = true;
+          isWaiting = false;
+          messages.add({'text': '⚠ 咨询师已接管对话。', 'isUser': false});
+          statusTimer?.cancel();
+          notifyListeners();
+        }
+
+        // 已结束
+        if (status == 'COMPLETED') {
+          isCompleted = true;
+          isWaiting = false;
+          statusTimer?.cancel();
+          notifyListeners();
+        }
+      }
+    });
+  }
+
+  /// 发送消息
   Future<void> sendMessage(String content) async {
     if (conversationId == null || content.trim().isEmpty) return;
 
-    /// 已结束 —— 禁止发送
+    // 会话已结束 → 禁止发送
     if (isCompleted) {
-      messages.add({'text': '该会话已结束，无法继续发送消息。', 'isUser': false});
+      messages.add({'text': '本次咨询已结束，无法继续发送消息。', 'isUser': false});
       notifyListeners();
       return;
     }
 
-    /// 等待接管 —— 不能发送消息
-    if (isWaiting && !isHumanConsult) {
-      messages.add({'text': '⚠ 系统检测到高风险内容，正在等待管理员接管，请稍等片刻…', 'isUser': false});
-      notifyListeners();
-      return;
-    }
-
+    // 加入本地消息
     messages.add({'text': content, 'isUser': true});
     notifyListeners();
 
@@ -139,45 +169,29 @@ class AiChatViewModel extends ChangeNotifier {
     try {
       Map<String, dynamic> res;
 
-      /// 已接管 → 发到人工接口
+      /// 情况 1：已经接管 → 发人工接口
       if (isHumanConsult) {
         res = await AiService.sendHumanMessage(conversationId!, content);
       } else {
-        /// 正常 → 发 AI 消息
+        /// 情况 2：尚未接管 → 发 AI 接口（允许继续与 AI 对话）
         res = await AiService.sendMessage(conversationId!, content);
       }
 
-      /// 后端没返回 data（可能是空字符串） → 人工处理中
       if (res['data'] == null) {
-        isWaiting = true;
-        messages.add({'text': '管理员正在处理您的对话，请耐心等待…', 'isUser': false});
+        messages.add({'text': '正在等待接管...', 'isUser': false});
         return;
       }
 
-      final reply = res['data']['content'] ?? '';
-      messages.add({'text': reply, 'isUser': false});
+      final data = res['data'];
+      final reply = data['content'] ?? '';
 
-      /// 风险高 → 等待接管
-      final risk = res['data']['riskLevel'];
-      final status = res['data']['status'];
-
-      if (!isHumanConsult && risk == "CRITICAL") {
-        isWaiting = true;
-        messages.add({'text': '⚠ 已检测到高风险内容，正在等待管理员接管…', 'isUser': false});
+      /// AI 回复（人工模式则可能为空）
+      if (reply.isNotEmpty) {
+        messages.add({'text': reply, 'isUser': false});
       }
 
-      /// 状态改变为 ESCALATED → 切人工
-      if (status == "ESCALATED") {
-        isWaiting = false;
-        isHumanConsult = true;
-        messages.add({'text': '⚠ 当前对话已由人工咨询师接管，将继续为您服务。', 'isUser': false});
-      }
-
-      /// 状态改变为 COMPLETED → 结束
-      if (status == "COMPLETED") {
-        isCompleted = true;
-        messages.add({'text': '本次咨询已结束，感谢您的信任。', 'isUser': false});
-      }
+      /// 更新状态
+      _applyStatus(data);
     } catch (e) {
       messages.add({'text': '网络异常：$e', 'isUser': false});
     } finally {
@@ -186,7 +200,7 @@ class AiChatViewModel extends ChangeNotifier {
     }
   }
 
-  /// 加载会话列表
+  /// 会话列表
   Future<void> loadConversationList() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -201,18 +215,9 @@ class AiChatViewModel extends ChangeNotifier {
         },
       );
 
-      if (res.body.isEmpty) {
-        conversations = [];
-        notifyListeners();
-        return;
-      }
-
-      final data = json.decode(res.body);
-
-      if (data['code'] == 200) {
+      if (res.body.isNotEmpty) {
+        final data = json.decode(res.body);
         conversations = data['data']['list'] ?? [];
-      } else {
-        conversations = [];
       }
     } catch (_) {
       conversations = [];
@@ -221,6 +226,7 @@ class AiChatViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 切换会话
   Future<void> switchConversation(int id) async {
     await loadConversationDetail(id);
   }
@@ -228,6 +234,7 @@ class AiChatViewModel extends ChangeNotifier {
   void clear() {
     messages.clear();
     conversationId = null;
+    _resetStatus();
     notifyListeners();
   }
 }

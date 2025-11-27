@@ -11,13 +11,26 @@ class ConsultantDetailPage extends StatefulWidget {
 }
 
 class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
+  DateTime selectedDay = DateTime.now();
+
+  List<DateTime> get next7days =>
+      List.generate(7, (i) => DateTime.now().add(Duration(days: i)));
+
   @override
   void initState() {
     super.initState();
     final vm = context.read<CounselorViewModel>();
+
     Future.microtask(() async {
       await vm.loadConsultantDetail(widget.consultantId);
-      await vm.fetchSchedules(widget.consultantId);
+
+      // 默认加载今天
+      final start = _format(selectedDay);
+      await vm.fetchSchedules(
+        widget.consultantId,
+        startDate: start,
+        endDate: start,
+      );
     });
   }
 
@@ -30,7 +43,7 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
       backgroundColor: const Color(0xFFFFFCF7),
       appBar: AppBar(
         title: const Text('咨询师详情'),
-        backgroundColor: const Color(0xFFFFFCF7),
+        backgroundColor: Colors.white,
         centerTitle: true,
       ),
       body: vm.isLoading && c == null
@@ -38,93 +51,280 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
           : c == null
           ? const Center(child: Text('加载失败'))
           : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 顶部信息
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
-                        child: Image.asset(
-                          'assets/images/man.jpg',
-                          width: 64,
-                          height: 64,
-                          fit: BoxFit.cover,
-                        ),
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  padding: const EdgeInsets.fromLTRB(10, 20, 10, 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade300, width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              c['realName'] ?? '未命名咨询师',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(32),
+                              child: Image.asset(
+                                'assets/images/man.jpg',
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              c['qualification'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
+                          ),
+
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      c['realName'] ?? '未命名咨询师',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      c['qualification'] ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Color.fromARGB(
+                                          255,
+                                          119,
+                                          116,
+                                          116,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.star,
+                                          size: 18,
+                                          color: Colors.amber,
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          c['rating'].toStringAsFixed(1),
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 13),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '经验: ${c['experienceYears'] ?? '--'}年',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 13),
+                                    Text(
+                                      '擅长领域: ${c['specialization'] ?? '未填写'}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '擅长：${c['specialization'] ?? '未填写'}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '经验：${c['experienceYears'] ?? '--'} 年',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // 简介
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                        child: Text(
+                          c['introduction'] ?? '暂无简介',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    c['introduction'] ?? '暂无简介',
-                    style: const TextStyle(fontSize: 13, height: 1.5),
+
+                // 日期选择横向列表
+                SizedBox(
+                  height: 90,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: next7days.length,
+                    itemBuilder: (_, index) {
+                      final day = next7days[index];
+                      final isSelected = _isSame(day, selectedDay);
+
+                      final week = _weekdayText(day.weekday);
+                      final dateStr =
+                          "${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}";
+
+                      return GestureDetector(
+                        onTap: () async {
+                          setState(() => selectedDay = day);
+                          await vm.fetchSchedules(
+                            widget.consultantId,
+                            startDate: _format(day),
+                            endDate: _format(day),
+                          );
+                        },
+                        child: Container(
+                          width: 70,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF608DFE)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF608DFE)
+                                  : Colors.grey.shade300,
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              if (isSelected)
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF608DFE,
+                                  ).withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      week,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      dateStr,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.black54,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 2,
+                                    horizontal: 4,
+                                  ),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF4EA3FF),
+                                    borderRadius: BorderRadius.only(
+                                      topRight: Radius.circular(12),
+                                      bottomLeft: Radius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "约",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Divider(),
 
-                // 可预约时间段
+                // 排班列表（当日）
                 Expanded(
                   child: vm.schedules.isEmpty
-                      ? const Center(child: Text('暂时没有可预约时间'))
+                      ? const Center(child: Text("当天没有可预约时间"))
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: vm.schedules.length,
-                          itemBuilder: (context, index) {
+                          itemBuilder: (_, index) {
                             final s = vm.schedules[index];
-                            final date = s['date'] ?? '';
-                            final start = s['startTime'] ?? '';
-                            final end = s['endTime'] ?? '';
+                            final start = s['startTime'];
+                            final end = s['endTime'];
                             final available = s['isAvailable'] == true;
 
                             return Card(
+                              color: Colors.white,
                               margin: const EdgeInsets.only(bottom: 10),
                               child: ListTile(
-                                title: Text('$date  $start - $end'),
-                                subtitle: Text(
-                                  available ? '可预约' : '已被预约',
+                                title: Text(
+                                  "$start - $end",
                                   style: TextStyle(
-                                    color: available
-                                        ? Colors.green
-                                        : Colors.red,
-                                    fontSize: 12,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 trailing: available
@@ -134,7 +334,14 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
                                           s,
                                           widget.consultantId,
                                         ),
-                                        child: const Text('预约'),
+                                        child: const Text(
+                                          '预约',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF608DFE),
+                                          ),
+                                        ),
                                       )
                                     : null,
                               ),
@@ -146,6 +353,33 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
             ),
     );
   }
+
+  String _weekdayText(int w) {
+    switch (w) {
+      case 1:
+        return "周一";
+      case 2:
+        return "周二";
+      case 3:
+        return "周三";
+      case 4:
+        return "周四";
+      case 5:
+        return "周五";
+      case 6:
+        return "周六";
+      case 7:
+        return "周日";
+      default:
+        return "";
+    }
+  }
+
+  bool _isSame(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  String _format(DateTime d) =>
+      "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
   Future<void> _onTapSchedule(
     BuildContext context,
@@ -168,9 +402,9 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$date  $start - $end'),
+            Text("$date  $start - $end"),
             const SizedBox(height: 8),
-            const Text('备注（可选）：', style: TextStyle(fontSize: 13)),
+            const Text("备注（可选）：", style: TextStyle(fontSize: 13)),
             const SizedBox(height: 4),
             TextField(
               maxLines: 2,
@@ -185,11 +419,11 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: const Text("取消"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('确认预约'),
+            child: const Text("确认预约"),
           ),
         ],
       ),
@@ -210,7 +444,7 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? '预约成功，等待确认' : '预约失败：${vm.errorMessage}'),
+        content: Text(success ? "预约成功，等待确认" : "预约失败：${vm.errorMessage}"),
       ),
     );
   }

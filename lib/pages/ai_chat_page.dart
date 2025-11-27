@@ -25,6 +25,7 @@ class _AIChatPageState extends State<AIChatPage> {
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+
     final vm = Provider.of<AiChatViewModel>(context, listen: false);
     vm.sendMessage(text);
     _controller.clear();
@@ -39,7 +40,7 @@ class _AIChatPageState extends State<AIChatPage> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
       }
@@ -47,6 +48,7 @@ class _AIChatPageState extends State<AIChatPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFCF7),
+
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFCF7),
         elevation: 0,
@@ -60,7 +62,6 @@ class _AIChatPageState extends State<AIChatPage> {
                     context,
                     vm.conversations,
                   );
-
                   if (selectedId != null && selectedId > 0) {
                     vm.switchConversation(selectedId);
                   }
@@ -69,7 +70,7 @@ class _AIChatPageState extends State<AIChatPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      vm.isAiTyping ? '正在输入中...' : vm.currentTitle,
+                      vm.isAiTyping ? '正在输入中…' : vm.currentTitle,
                       style: const TextStyle(color: Colors.black87),
                     ),
                     const Icon(Icons.arrow_drop_down, color: Colors.black54),
@@ -78,16 +79,15 @@ class _AIChatPageState extends State<AIChatPage> {
               ),
             ),
 
-            // 新建对话按钮
             IconButton(
               icon: const Icon(
                 Icons.add_comment_rounded,
                 color: Colors.black87,
               ),
               onPressed: () async {
-                final result = await showNewChatDialog(context);
-                if (result != null && result.isNotEmpty) {
-                  await vm.createConversation(result);
+                final title = await showNewChatDialog(context);
+                if (title != null && title.isNotEmpty) {
+                  vm.createConversation(title);
                 }
               },
             ),
@@ -97,21 +97,42 @@ class _AIChatPageState extends State<AIChatPage> {
 
       body: Column(
         children: [
-          //如果已转人工，显示提示条
-          if (vm.isHumanConsult)
+          // 顶部状态提示条（根据状态自动切换）
+          if (vm.isCompleted)
             Container(
               width: double.infinity,
-              color: Colors.orange.shade50,
               padding: const EdgeInsets.all(12),
+              color: Colors.grey.shade200,
               child: const Text(
-                '会话已由专业心理咨询师接管，请耐心等待回复',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.w600,
-                ),
+                '本次咨询已结束',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          else if (vm.isWaiting)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: Colors.yellow.shade50,
+              child: const Text(
+                '⚠ 正在等待管理员接管，请继续保持沟通…',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.orange),
+              ),
+            )
+          else if (vm.isHumanConsult)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: Colors.orange.shade50,
+              child: const Text(
+                '会话已由人工咨询师接管',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.orange),
               ),
             ),
 
+          // 消息列表
           Expanded(
             child: vm.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -132,16 +153,19 @@ class _AIChatPageState extends State<AIChatPage> {
           // 输入框
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
+                      enabled: !vm.isCompleted, // 已结束不能输入
                       controller: _controller,
                       decoration: InputDecoration(
-                        hintText: vm.isHumanConsult
-                            ? '向咨询师发送消息...'
-                            : '输入你的想法...',
+                        hintText: vm.isCompleted
+                            ? '咨询已结束'
+                            : vm.isHumanConsult
+                            ? '向咨询师发送消息…'
+                            : '输入你的想法…',
                         filled: true,
                         fillColor: Colors.grey.shade100,
                         border: OutlineInputBorder(
@@ -156,10 +180,17 @@ class _AIChatPageState extends State<AIChatPage> {
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
+
                   const SizedBox(width: 8),
+
                   IconButton(
-                    onPressed: _sendMessage,
-                    icon: const Icon(Icons.send, color: Color(0xFF6F99BF)),
+                    onPressed: vm.isCompleted ? null : _sendMessage,
+                    icon: Icon(
+                      Icons.send,
+                      color: vm.isCompleted
+                          ? Colors.grey
+                          : const Color(0xFF6F99BF),
+                    ),
                   ),
                 ],
               ),
@@ -171,6 +202,7 @@ class _AIChatPageState extends State<AIChatPage> {
   }
 }
 
+/// 新建对话弹窗
 Future<String?> showNewChatDialog(BuildContext context) {
   final controller = TextEditingController();
 
@@ -198,18 +230,14 @@ Future<String?> showNewChatDialog(BuildContext context) {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  hintText: "请输入对话标题...",
-
-                  // 默认边框
+                  hintText: "请输入对话标题…",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(
                       color: Color(0xFF6F99BF),
-                      width: 0.8, // 超细边框
+                      width: 0.8,
                     ),
                   ),
-
-                  // 未聚焦时边框
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(
@@ -217,16 +245,13 @@ Future<String?> showNewChatDialog(BuildContext context) {
                       width: 0.8,
                     ),
                   ),
-
-                  // 聚焦时边框
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(
                       color: Color(0xFF6F99BF),
-                      width: 1.0, // 聚焦时稍微亮一点
+                      width: 1.0,
                     ),
                   ),
-
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 12,
@@ -251,7 +276,7 @@ Future<String?> showNewChatDialog(BuildContext context) {
                     onPressed: () =>
                         Navigator.pop(context, controller.text.trim()),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF6F99BF),
+                      backgroundColor: const Color(0xFF6F99BF),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -275,6 +300,7 @@ Future<String?> showNewChatDialog(BuildContext context) {
   );
 }
 
+/// 历史对话选择弹窗
 Future<int?> showConversationSelectorDialog(
   BuildContext context,
   List<dynamic> conversations,
@@ -302,10 +328,8 @@ Future<int?> showConversationSelectorDialog(
                   ),
                 ),
               ),
-
               const Divider(height: 1),
 
-              // 可滚动区域
               Expanded(
                 child: ListView.builder(
                   itemCount: conversations.length,
@@ -314,9 +338,7 @@ Future<int?> showConversationSelectorDialog(
                     final title = c['title'] ?? '未命名对话';
 
                     return InkWell(
-                      onTap: () {
-                        Navigator.pop(context, c['id']);
-                      },
+                      onTap: () => Navigator.pop(context, c['id']),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -350,7 +372,6 @@ Future<int?> showConversationSelectorDialog(
               ),
 
               const Divider(height: 1),
-
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text("关闭"),

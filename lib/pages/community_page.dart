@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../viewmodels/community_view_model.dart';
 import 'add_post_page.dart';
 import 'post_detail_page.dart'; // 详情页
+import 'profile_guest_page.dart';
+import '../viewmodels/user_view_model.dart';
+import 'package:provider/provider.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -12,90 +15,103 @@ class CommunityPage extends StatefulWidget {
 }
 
 class _CommunityPageState extends State<CommunityPage> {
-  final vm = CommunityViewModel();
-
-  @override
-  void initState() {
-    super.initState();
-    vm.fetchPosts();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F1ED),
-      appBar: AppBar(
-        title: const Text(
-          '心理社区',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: const Color(0xFFF3F1ED),
-        elevation: 0.5,
-        centerTitle: true,
-      ),
-      body: AnimatedBuilder(
-        animation: vm,
-        builder: (context, _) {
-          if (vm.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (vm.errorMessage != null) {
-            return Center(child: Text(vm.errorMessage!));
-          }
-          if (vm.posts.isEmpty) {
-            return const Center(child: Text('还没有帖子，快去发布一个吧~'));
-          }
+    final userVM = context.watch<UserViewModel>();
+    final vm = context.watch<CommunityViewModel>();
 
-          return RefreshIndicator(
-            onRefresh: vm.fetchPosts,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: vm.posts.length,
-              itemBuilder: (context, index) {
-                final post = vm.posts[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PostDetailPage(postId: post['id']),
-                      ),
+    return AnimatedBuilder(
+      animation: Listenable.merge([userVM, vm]),
+      builder: (context, _) {
+        if (userVM.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (!userVM.isLoggedIn) {
+          return const ProfileGuestPage();
+        }
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF3F1ED),
+          appBar: AppBar(
+            title: const Text(
+              '心理社区',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: const Color(0xFFF3F1ED),
+            elevation: 0.5,
+            centerTitle: true,
+          ),
+          body: AnimatedBuilder(
+            animation: vm,
+            builder: (context, _) {
+              if (vm.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (vm.errorMessage != null) {
+                return Center(child: Text(vm.errorMessage!));
+              }
+              if (vm.posts.isEmpty) {
+                return const Center(child: Text('还没有帖子，快去发布一个吧~'));
+              }
+
+              return RefreshIndicator(
+                onRefresh: vm.fetchPosts,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  itemCount: vm.posts.length,
+                  itemBuilder: (context, index) {
+                    final post = vm.posts[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PostDetailPage(postId: post['id']),
+                          ),
+                        );
+                      },
+                      child: _buildPostCard(vm, post),
                     );
                   },
-                  child: _buildPostCard(post),
+                ),
+              );
+            },
+          ),
+
+          // 右下角发帖按钮
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 10, right: 20),
+            child: FloatingActionButton(
+              backgroundColor: const Color(0xFF6F99BF),
+              child: const Icon(Icons.add, color: Colors.white),
+              onPressed: () async {
+                final newPost = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddPostPage()),
                 );
+                if (newPost != null) {
+                  vm.fetchPosts(); // 刷新列表
+                }
               },
             ),
-          );
-        },
-      ),
-
-      // 右下角发帖按钮
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10, right: 20),
-        child: FloatingActionButton(
-          backgroundColor: const Color(0xFF6F99BF),
-          child: const Icon(Icons.add, color: Colors.white),
-          onPressed: () async {
-            final newPost = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AddPostPage()),
-            );
-            if (newPost != null) {
-              vm.fetchPosts(); // 刷新列表
-            }
-          },
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   /// 帖子卡片
-  Widget _buildPostCard(Map<String, dynamic> post) {
+  Widget _buildPostCard(CommunityViewModel vm, Map<String, dynamic> post) {
     final authorName = post['isAnonymous'] == true
         ? '匿名用户'
         : (post['authorName'] ?? '未知');

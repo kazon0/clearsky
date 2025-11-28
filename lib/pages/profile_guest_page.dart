@@ -102,10 +102,11 @@ class _ProfileGuestPageState extends State<ProfileGuestPage>
                             MaterialPageRoute(
                               builder: (_) => const LoginPage(),
                             ),
-                          ).then((_) {
-                            // 登录页关闭后刷新一次
-                            debugPrint('[GuestPage] 登录页返回，准备刷新用户信息');
-                            userVM.checkLoginAndLoad();
+                          ).then((result) {
+                            if (result == true) {
+                              debugPrint('[GuestPage] 登录成功，刷新用户状态');
+                              userVM.checkLoginAndLoad();
+                            }
                           });
                         },
                         child: Row(

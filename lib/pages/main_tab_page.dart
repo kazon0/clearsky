@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'profile_page.dart';
+import 'package:provider/provider.dart';
+
+import 'home_page.dart';
 import 'consultation_page.dart';
 import 'community_page.dart';
-import 'home_page.dart';
+import 'profile_page.dart';
+
+import '../viewmodels/user_view_model.dart';
+import '../viewmodels/counselor_view_model.dart';
+import '../viewmodels/community_view_model.dart';
 
 class MainTabPage extends StatefulWidget {
   const MainTabPage({super.key});
@@ -21,16 +27,36 @@ class _MainTabPageState extends State<MainTabPage> {
     ProfilePage(),
   ];
 
+  late UserViewModel userVM;
+  late CommunityViewModel communityVM;
+  late CounselorViewModel counselorVM;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      userVM = context.read<UserViewModel>();
+      communityVM = context.read<CommunityViewModel>();
+      counselorVM = context.read<CounselorViewModel>();
+
+      userVM.checkLoginAndLoad();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFEFBF2),
-      body: pages[_index],
+
+      //  用 IndexedStack 让所有页面常驻不销毁
+      body: IndexedStack(index: _index, children: pages),
+
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(bottom: 10, left: 20, right: 20),
           child: Container(
-            height: 70, // 稍微再矮一点
+            height: 70,
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(40),
@@ -54,11 +80,24 @@ class _MainTabPageState extends State<MainTabPage> {
                 iconSize: 22,
                 selectedFontSize: 12,
                 unselectedFontSize: 12,
-                onTap: (i) => setState(() => _index = i),
+
+                onTap: (i) {
+                  setState(() => _index = i);
+
+                  // 提前加载数据
+                  if (i == 1) {
+                    counselorVM.fetchCounselors();
+                  } else if (i == 2) {
+                    communityVM.fetchPosts();
+                  } else if (i == 3) {
+                    userVM.checkLoginAndLoad();
+                  }
+                },
+
                 items: const [
                   BottomNavigationBarItem(
                     icon: Padding(
-                      padding: EdgeInsets.only(top: 4), // 稍微往下，但不会撑破
+                      padding: EdgeInsets.only(top: 4),
                       child: Icon(Icons.home),
                     ),
                     label: '首页',

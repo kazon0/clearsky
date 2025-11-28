@@ -10,6 +10,7 @@ import 'viewmodels/counselor_view_model.dart';
 import 'viewmodels/assessment_view_model.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ClearSkyApp());
 }
 
@@ -35,7 +36,39 @@ class ClearSkyApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.grey.shade100,
           fontFamily: 'PingFang SC',
         ),
-        home: const MainTabPage(),
+
+        home: const AppSplashScreen(),
+      ),
+    );
+  }
+}
+
+/// 自定义全屏启动页
+class AppSplashScreen extends StatefulWidget {
+  const AppSplashScreen({super.key});
+
+  @override
+  State<AppSplashScreen> createState() => _AppSplashScreenState();
+}
+
+class _AppSplashScreenState extends State<AppSplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainTabPage()),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SizedBox.expand(
+        child: Image.asset("assets/images/LaunchImage.png", fit: BoxFit.cover),
       ),
     );
   }

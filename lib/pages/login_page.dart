@@ -191,7 +191,9 @@ class _LoginPageState extends State<LoginPage> {
                                     _idController.text.trim(),
                                     _pwdController.text.trim(),
                                   );
-                                  if (ok && mounted) Navigator.pop(context);
+                                  if (ok && mounted)
+                                    Navigator.pop(context, true);
+                                  ;
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Color.fromARGB(

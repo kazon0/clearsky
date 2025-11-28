@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../viewmodels/user_view_model.dart';
 import 'ai_chat_page.dart';
 import 'test_list_page.dart';
 import 'resource_page.dart';
 import 'community_page.dart';
+import 'profile_guest_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -134,7 +137,12 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   Transform.translate(
-                    offset: const Offset(0, -100), // 向上移动10像素
+                    offset: Offset(
+                      0,
+                      Theme.of(context).platform == TargetPlatform.android
+                          ? -50
+                          : -100,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: GridView.count(
@@ -179,7 +187,12 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 10),
 
                   Transform.translate(
-                    offset: const Offset(0, -90),
+                    offset: Offset(
+                      0,
+                      Theme.of(context).platform == TargetPlatform.android
+                          ? -40
+                          : -90,
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -284,14 +297,22 @@ class _HomePageState extends State<HomePage> {
   }) {
     return InkWell(
       onTap: () {
+        final userVM = context.read<UserViewModel>();
+
+        if (!userVM.isLoggedIn) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileGuestPage()),
+          );
+          return;
+        }
+
         Navigator.push(context, MaterialPageRoute(builder: (_) => page));
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: isBlue
-              ? const Color(0xFFEAF2F3) // 蓝色
-              : const Color(0xFFFFF6E5), // 米黄色
+          color: isBlue ? const Color(0xFFEAF2F3) : const Color(0xFFFFF6E5),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(

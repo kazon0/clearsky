@@ -39,6 +39,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.5.0
   shared_preferences: ^2.5.3
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -102,3 +103,14 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/app_icon.png"
   remove_alpha_ios: true
+
+flutter_native_splash:
+  android: true
+  ios: true
+  web: false
+  color: "#FFFFFF"
+  image: assets/images/app_icon.png
+
+  android_12:
+    color: "#FFFFFF"
+    image: assets/images/app_icon.png

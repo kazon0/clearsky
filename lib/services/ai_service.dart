@@ -87,6 +87,8 @@ class AiService {
     );
 
     final data = json.decode(response.body);
+    print("HUMAN MESSAGE RESPONSE = ${jsonEncode(data)}");
+
     return data;
   }
 }

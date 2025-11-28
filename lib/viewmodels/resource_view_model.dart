@@ -3,76 +3,77 @@ import '../services/resource_service.dart';
 
 class ResourceViewModel extends ChangeNotifier {
   bool isLoading = false;
+
   String searchKeyword = '';
-  String selectedCategory = 'all';
+  String selectedType = ''; // => 对应后端 type: ARTICLE / VIDEO / MUSIC
+  int? selectedCategoryId;
+
   List<Map<String, dynamic>> resources = [];
+  int currentPage = 1;
+  int totalPages = 1;
 
-  /// 分类标签
-  final List<Map<String, String>> categories = const [
-    {'key': 'all', 'label': '全部'},
-    {'key': 'article', 'label': '文章'},
-    {'key': 'video', 'label': '视频'},
-    {'key': 'course', 'label': '课程'},
-  ];
-
-  /// 获取资源数据
-  Future<void> fetchResources() async {
+  /// 获取资源列表
+  Future<void> fetchResources({int page = 1}) async {
     isLoading = true;
     notifyListeners();
 
     try {
-      final all = await ResourceService.getResources();
-      List<Map<String, dynamic>> filtered = all;
+      final data = await ResourceService.getResources(
+        page: page,
+        type: selectedType.isEmpty ? null : selectedType,
+        keyword: searchKeyword.isEmpty ? null : searchKeyword,
+      );
 
-      if (selectedCategory != 'all') {
-        filtered = filtered
-            .where((e) => e['category'] == selectedCategory)
-            .toList();
-      }
-
-      if (searchKeyword.isNotEmpty) {
-        final kw = searchKeyword.toLowerCase();
-        filtered = filtered.where((e) {
-          return (e['title'] ?? '').toLowerCase().contains(kw) ||
-              (e['summary'] ?? '').toLowerCase().contains(kw);
-        }).toList();
-      }
-
-      resources = filtered;
+      resources = List<Map<String, dynamic>>.from(data['list'] ?? []);
     } catch (e) {
-      debugPrint('获取资源失败: $e');
+      debugPrint('资源加载失败: $e');
     }
 
     isLoading = false;
     notifyListeners();
   }
 
-  /// 更新分类
-  void updateCategory(String category) {
-    selectedCategory = category;
+  /// 切换类型
+  void updateType(String type) {
+    selectedType = type;
     fetchResources();
+  }
+
+  /// 切换分类
+  void updateCategory(int? id) {
+    selectedCategoryId = id;
+    fetchResources(page: 1);
   }
 
   /// 更新搜索关键字
   void updateKeyword(String keyword) {
     searchKeyword = keyword;
-    notifyListeners();
+    fetchResources(page: 1);
   }
 
-  /// 收藏状态切换（本地模拟）
-  void toggleFavorite(int index) {
-    resources[index]['isFavorite'] = !(resources[index]['isFavorite'] ?? false);
-    notifyListeners();
+  /// 点赞
+  Future<void> toggleLike(int index) async {
+    final item = resources[index];
+    final oldStatus = item['isLiked'] ?? false;
+
+    try {
+      await ResourceService.likeResource(item['id'], !oldStatus);
+      resources[index]['isLiked'] = !oldStatus;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('操作失败: $e');
+    }
   }
 
-  String categoryLabel(String type) {
+  /// 类型中文名
+  String typeLabel(String type) {
     switch (type) {
-      case 'article':
+      case 'ARTICLE':
         return '文章';
-      case 'video':
+      case 'VIDEO':
         return '视频';
-      case 'course':
-        return '课程';
+      case 'MUSIC':
+        return '音乐';
       default:
         return '其他';
     }

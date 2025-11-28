@@ -183,10 +183,13 @@ class AiChatViewModel extends ChangeNotifier {
       }
 
       final data = res['data'];
-      final reply = data['content'] ?? '';
+      final reply = data['content'];
+      final senderType = data['senderType'];
 
-      /// AI 回复（人工模式则可能为空）
-      if (reply.isNotEmpty) {
+      // 只有当不是用户发的消息时，才把它当成“对方回复”展示出来
+      if (reply != null &&
+          reply.toString().trim().isNotEmpty &&
+          senderType != 'USER') {
         messages.add({'text': reply, 'isUser': false});
       }
 

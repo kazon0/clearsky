@@ -106,6 +106,8 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       c['realName'] ?? '未命名咨询师',
@@ -114,7 +116,7 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+
                                     Text(
                                       c['qualification'] ?? '',
                                       style: const TextStyle(
@@ -127,7 +129,7 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+
                                     Row(
                                       children: [
                                         const Icon(
@@ -137,7 +139,9 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
                                         ),
                                         const SizedBox(width: 2),
                                         Text(
-                                          c['rating'].toStringAsFixed(1),
+                                          (c['rating'] ?? 0.0).toStringAsFixed(
+                                            1,
+                                          ),
                                           style: const TextStyle(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,

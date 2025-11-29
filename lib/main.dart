@@ -8,6 +8,7 @@ import 'viewmodels/ai_chat_view_model.dart';
 import 'viewmodels/community_view_model.dart';
 import 'viewmodels/counselor_view_model.dart';
 import 'viewmodels/assessment_view_model.dart';
+import 'viewmodels/resource_view_model.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ class ClearSkyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CommunityViewModel()),
         ChangeNotifierProvider(create: (_) => CounselorViewModel()),
         ChangeNotifierProvider(create: (_) => AssessmentViewModel()),
+        ChangeNotifierProvider(create: (_) => ResourceViewModel()),
       ],
       child: MaterialApp(
         title: '晴空心理',

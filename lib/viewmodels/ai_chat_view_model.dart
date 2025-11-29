@@ -15,6 +15,7 @@ class AiChatViewModel extends ChangeNotifier {
   bool isCompleted = false; // 对话已结束
 
   Timer? statusTimer; // 定时器（每秒检查一次是否被接管）
+  Timer? messageTimer;
   String currentTitle = 'AI 心理陪伴';
 
   int? conversationId;
@@ -116,6 +117,7 @@ class AiChatViewModel extends ChangeNotifier {
     if (isHumanConsult) {
       isWaiting = false;
       statusTimer?.cancel();
+      _startMessagePolling();
     }
   }
 
@@ -142,6 +144,36 @@ class AiChatViewModel extends ChangeNotifier {
           isCompleted = true;
           isWaiting = false;
           statusTimer?.cancel();
+          notifyListeners();
+        }
+      }
+    });
+  }
+
+  void _startMessagePolling() {
+    messageTimer?.cancel();
+
+    // 仅在人工接管时轮询
+    if (!isHumanConsult) return;
+
+    messageTimer = Timer.periodic(Duration(seconds: 2), (_) async {
+      if (conversationId == null) return;
+
+      final res = await AiService.getConversationDetail(conversationId!);
+      if (res['code'] == 200) {
+        final list = res['data']['messages'] as List<dynamic>;
+        final newMessages = list
+            .map(
+              (m) => {
+                'text': m['content'],
+                'isUser': m['senderType'] == 'USER',
+              },
+            )
+            .toList();
+
+        // 只有当消息数量变化才更新，防止重复刷新
+        if (newMessages.length != messages.length) {
+          messages = newMessages;
           notifyListeners();
         }
       }
@@ -238,6 +270,7 @@ class AiChatViewModel extends ChangeNotifier {
     messages.clear();
     conversationId = null;
     _resetStatus();
+    messageTimer?.cancel();
     notifyListeners();
   }
 }

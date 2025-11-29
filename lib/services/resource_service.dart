@@ -62,8 +62,12 @@ class ResourceService {
     );
 
     if (res.statusCode == 200) {
-      final data = json.decode(res.body)['data'];
-      return data;
+      try {
+        final jsonData = json.decode(res.body);
+        return jsonData['data'];
+      } catch (e) {
+        throw Exception("资源详情 JSON 解析异常: $e");
+      }
     } else {
       throw Exception('获取资源详情失败：${res.statusCode}');
     }

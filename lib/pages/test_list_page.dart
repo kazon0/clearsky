@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clearsky/viewmodels/assessment_view_model.dart';
 import 'assessment_page.dart';
+import 'test_report_page.dart';
 
 class TestListPage extends StatefulWidget {
   const TestListPage({super.key});
@@ -12,104 +13,194 @@ class TestListPage extends StatefulWidget {
 }
 
 class _TestListPageState extends State<TestListPage> {
+  String keyword = '';
+
   @override
   void initState() {
     super.initState();
-    // 在下一事件循环触发，避免在构建期直接调用 Provider
     Future.microtask(() {
-      final vm = context.read<AssessmentViewModel>();
-      vm.fetchTests();
+      context.read<AssessmentViewModel>().fetchTests(keyword: keyword);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // 使用 watch 可以在 vm 状态变化时触发重建
     final vm = context.watch<AssessmentViewModel>();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFCF7),
       appBar: AppBar(
-        title: const Text('心理测评'),
+        backgroundColor: const Color(0xFFFFFCF7),
+        elevation: 0,
         centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: Colors.black87,
-      ),
-      body: Builder(
-        builder: (_) {
-          if (vm.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (vm.errorMessage != null) {
-            return Center(child: Text('加载失败：${vm.errorMessage}'));
-          }
-
-          if (vm.testList.isEmpty) {
-            return const Center(child: Text('暂无可用测评'));
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: vm.testList.length,
-            itemBuilder: (context, i) {
-              final test = vm.testList[i];
-              final title = test['title'] ?? '未命名测试';
-              final desc = test['description'] ?? '暂无简介';
-              final id = test['id'] ?? test['testId'] ?? i;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AssessmentPage(
-                          testId: id is int
-                              ? id
-                              : int.tryParse(id.toString()) ?? i,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        desc,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black87,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          '心理测评',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded, color: Colors.black87),
+            tooltip: '我的测评报告',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TestReportPage()),
               );
             },
+          ),
+        ],
+      ),
+
+      body: Column(
+        children: [
+          // 搜索框
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              onChanged: (v) => keyword = v,
+              onSubmitted: (_) => vm.fetchTests(keyword: keyword),
+              decoration: InputDecoration(
+                hintText: '搜索测评，如“焦虑”、“抑郁”',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: vm.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : vm.testList.isEmpty
+                ? const Center(child: Text('暂无可用测评'))
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: vm.testList.length,
+                    itemBuilder: (_, idx) {
+                      final t = vm.testList[idx];
+
+                      final title = t['title'] ?? '未命名测试';
+                      final desc = t['description'] ?? '暂无简介';
+                      final rawId = t['id'] ?? t['testId'] ?? idx;
+
+                      final int testId = rawId is int
+                          ? rawId
+                          : int.tryParse(rawId.toString()) ?? idx;
+
+                      return _testCard(
+                        context,
+                        testId: testId,
+                        title: title,
+                        desc: desc,
+                        imagePath: _pickCover(idx),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _pickCover(int id) {
+    final covers = [
+      'assets/images/cover1.jpg',
+      'assets/images/cover2.jpg',
+      'assets/images/cover3.jpg',
+      'assets/images/cover4.jpg',
+    ];
+    return covers[id % covers.length];
+  }
+
+  // 卡片组件
+  Widget _testCard(
+    BuildContext context, {
+    required int testId,
+    required String title,
+    required String desc,
+    required String imagePath,
+  }) {
+    return Card(
+      color: Colors.grey.shade50,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 25, left: 4, right: 4),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) {
+                return AssessmentPage(testId: testId);
+              },
+            ),
           );
         },
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  imagePath,
+                  width: 110,
+                  height: 85,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10, top: 8, bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 标题
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // 描述
+                    Text(
+                      desc,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

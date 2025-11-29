@@ -11,9 +11,15 @@ class TestService {
   }
 
   /// 获取测评列表
-  static Future<List<Map<String, dynamic>>> getTests() async {
+  static Future<List<Map<String, dynamic>>> getTests({
+    String keyword = "",
+  }) async {
     final token = await _getToken();
-    final uri = Uri.parse('$baseUrl/tests');
+
+    // 构建 URL（带 keyword 参数）
+    final uri = Uri.parse(
+      keyword.isEmpty ? '$baseUrl/tests' : '$baseUrl/tests?keyword=$keyword',
+    );
 
     final res = await http.get(
       uri,
@@ -22,10 +28,12 @@ class TestService {
         'Content-Type': 'application/json',
       },
     );
-    print(jsonDecode(res.body));
+
+    print("测试接口响应 = ${jsonDecode(res.body)}");
+
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
-      // 取出 data.list
+
       final list = (data['data']?['list']) ?? [];
 
       return List<Map<String, dynamic>>.from(list);

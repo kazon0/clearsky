@@ -17,12 +17,12 @@ class AssessmentViewModel extends ChangeNotifier {
   int currentIndex = 0;
 
   /// 获取所有可用的测试列表
-  Future<void> fetchTests() async {
+  Future<void> fetchTests({String keyword = ""}) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
     try {
-      final data = await TestService.getTests();
+      final data = await TestService.getTests(keyword: keyword);
       testList = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       errorMessage = e.toString();

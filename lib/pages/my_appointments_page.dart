@@ -23,53 +23,113 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     final vm = context.watch<CounselorViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('我的预约'), centerTitle: true),
+      backgroundColor: const Color(0xFFFFFCF7),
+      appBar: AppBar(
+        title: const Text(
+          '我的预约',
+          style: TextStyle(color: Colors.black, fontSize: 18),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: vm.isLoading && vm.myAppointments.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : vm.myAppointments.isEmpty
-          ? const Center(child: Text('暂时还没有预约记录'))
+          ? const Center(
+              child: Text(
+                '暂时还没有预约记录',
+                style: TextStyle(fontSize: 15, color: Colors.black54),
+              ),
+            )
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.all(16),
               itemCount: vm.myAppointments.length,
               itemBuilder: (context, index) {
                 final a = vm.myAppointments[index];
                 final status = a['status'] ?? '';
                 final canCancel = status == 'PENDING' || status == 'CONFIRMED';
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    title: Text(a['consultantName'] ?? '未知咨询师'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${a['appointmentDate'] ?? ''} '
-                          '${a['startTime'] ?? ''} - ${a['endTime'] ?? ''}',
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '状态：$status',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: status == 'CONFIRMED'
-                                ? Colors.green
-                                : status == 'CANCELLED'
-                                ? Colors.grey
-                                : Colors.orange,
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing: canCancel
-                        ? TextButton(
-                            onPressed: () => _cancel(context, a['id']),
-                            child: const Text(
-                              '取消',
-                              style: TextStyle(color: Colors.red),
+                Color statusColor;
+                switch (status) {
+                  case 'CONFIRMED':
+                    statusColor = Colors.green;
+                    break;
+                  case 'CANCELLED':
+                    statusColor = Colors.grey;
+                    break;
+                  default:
+                    statusColor = Colors.orange;
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 咨询师姓名 + 取消按钮
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            a['consultantName'] ?? '未知咨询师',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
                             ),
-                          )
-                        : null,
+                          ),
+                          if (canCancel)
+                            GestureDetector(
+                              onTap: () => _cancel(context, a['id']),
+                              child: const Text(
+                                "取消",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // 时间
+                      Text(
+                        "${a['appointmentDate'] ?? ''}  "
+                        "${a['startTime'] ?? ''} - ${a['endTime'] ?? ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // 状态
+                      Text(
+                        "状态：$status",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -83,26 +143,62 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('取消预约'),
-        content: TextField(
-          maxLines: 3,
-          onChanged: (v) => reason = v,
-          decoration: const InputDecoration(
-            hintText: '简单写一下取消原因（可选）',
-            border: OutlineInputBorder(),
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '取消预约',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                maxLines: 3,
+                onChanged: (v) => reason = v,
+                decoration: InputDecoration(
+                  hintText: '简单写一下取消原因（可选）',
+                  filled: true,
+                  fillColor: const Color(0xFFF6F6F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text(
+                      "返回",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text("确认取消"),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('返回'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('确认取消', style: TextStyle(color: Colors.red)),
-          ),
-        ],
       ),
     );
 

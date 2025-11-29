@@ -400,36 +400,74 @@ class _ConsultantDetailPageState extends State<ConsultantDetailPage> {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('确认预约'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("$date  $start - $end"),
-            const SizedBox(height: 8),
-            const Text("备注（可选）：", style: TextStyle(fontSize: 13)),
-            const SizedBox(height: 4),
-            TextField(
-              maxLines: 2,
-              onChanged: (v) => notes = v,
-              decoration: const InputDecoration(
-                hintText: '简单说说想咨询的问题',
-                border: OutlineInputBorder(),
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '确认预约',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+
+              Text(
+                "$date  $start - $end",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              const Text("备注（可选）：", style: TextStyle(fontSize: 13)),
+              const SizedBox(height: 6),
+
+              TextField(
+                maxLines: 2,
+                onChanged: (v) => notes = v,
+                decoration: InputDecoration(
+                  hintText: '简单说说想咨询的问题',
+                  filled: true,
+                  fillColor: const Color(0xFFF6F6F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text(
+                      "取消",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF608DFE),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text("确认预约"),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("取消"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("确认预约"),
-          ),
-        ],
       ),
     );
 

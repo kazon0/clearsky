@@ -21,7 +21,7 @@ class CounselorViewModel extends ChangeNotifier {
   // 筛选
   String selectedSpecialty = '';
 
-  // ========== 咨询师列表 ==========
+  // 咨询师列表
   Future<void> fetchCounselors({
     String? specialization,
     double? minRating,
@@ -45,7 +45,7 @@ class CounselorViewModel extends ChangeNotifier {
     fetchCounselors();
   }
 
-  // ========== 咨询师详情 ==========
+  //咨询师详情
   Future<void> loadConsultantDetail(int consultantId) async {
     _setLoading(true);
     try {
@@ -60,7 +60,7 @@ class CounselorViewModel extends ChangeNotifier {
     }
   }
 
-  // ========== 可预约时间 ==========
+  //可预约时间
   Future<void> fetchSchedules(
     int consultantId, {
     String? startDate,
@@ -68,11 +68,36 @@ class CounselorViewModel extends ChangeNotifier {
   }) async {
     _setLoading(true);
     try {
-      schedules = await CounselorService.getAvailableSchedules(
+      // 原始排班列表
+      final all = await CounselorService.getAvailableSchedules(
         consultantId,
         startDate: startDate,
         endDate: endDate,
       );
+
+      // 获取用户当前所有预约（为了过滤）
+      await fetchMyAppointments();
+
+      // 用户已预约的时间段（当天的）
+      final myBooked = myAppointments.where((a) {
+        // 只过滤当前这一天
+        return a['appointmentDate'] == startDate &&
+            (a['status'] == 'PENDING' || a['status'] == 'CONFIRMED');
+      }).toList();
+
+      // 前端过滤
+      schedules = all.where((s) {
+        final start = s['startTime'];
+        final end = s['endTime'];
+
+        // 匹配已预约的时间段
+        final conflict = myBooked.any(
+          (a) => a['startTime'] == start && a['endTime'] == end,
+        );
+
+        return !conflict; // 只有没冲突的才能显示
+      }).toList();
+
       errorMessage = null;
     } catch (e) {
       errorMessage = '$e';
@@ -81,7 +106,7 @@ class CounselorViewModel extends ChangeNotifier {
     }
   }
 
-  // ========== 创建预约 ==========
+  // 创建预约
   Future<bool> createAppointment({
     required int consultantId,
     required int scheduleId,
@@ -110,11 +135,26 @@ class CounselorViewModel extends ChangeNotifier {
     }
   }
 
-  // ========== 我的预约列表 ==========
+  // 我的预约列表
   Future<void> fetchMyAppointments({String? status}) async {
     _setLoading(true);
+
     try {
       myAppointments = await CounselorService.getMyAppointments(status: status);
+      for (var a in myAppointments) {
+        final consultantId = a['consultantId'];
+        if (consultantId != null &&
+            (a['consultantName'] == null || a['consultantName'] == '未知咨询师')) {
+          try {
+            final detail = await CounselorService.getConsultantDetail(
+              consultantId,
+            );
+            a['consultantName'] = detail['realName'] ?? '咨询师$consultantId';
+          } catch (e) {
+            a['consultantName'] = '咨询师$consultantId';
+          }
+        }
+      }
       errorMessage = null;
     } catch (e) {
       errorMessage = '$e';
@@ -123,7 +163,7 @@ class CounselorViewModel extends ChangeNotifier {
     }
   }
 
-  // ========== 取消预约 ==========
+  //  取消预约
   Future<bool> cancelAppointment({
     required int appointmentId,
     required String reason,

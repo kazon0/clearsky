@@ -41,10 +41,11 @@
 |:--:|:--:|:--:|
 | <img src="https://github.com/user-attachments/assets/7b60ee14-8fea-4296-9562-6f86a66c590a" width="200" /> | <img src="https://github.com/user-attachments/assets/3b221b93-9696-4a59-a9ab-189ab1046e0b" width="200" /> | <img src="https://github.com/user-attachments/assets/d7f6de24-8d2b-4685-b39d-269dd3e4e2fe" width="200" /> 
 
+## APK 下载
 
-##   apk下载
+点击后即可直接下载（适用于 Android）
 
-项目apk可访问路径clearsky/release/app-arm64-v8a-release.apk.1 下载并运行
+👉 [**下载 ClearSky APK**](https://raw.githubusercontent.com/kazon0/clearsky/main/release/app-arm64-v8a-release.apk.1)
 
 
 

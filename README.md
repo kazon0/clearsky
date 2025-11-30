@@ -42,21 +42,9 @@
 | <img src="https://github.com/user-attachments/assets/7b60ee14-8fea-4296-9562-6f86a66c590a" width="200" /> | <img src="https://github.com/user-attachments/assets/3b221b93-9696-4a59-a9ab-189ab1046e0b" width="200" /> | <img src="https://github.com/user-attachments/assets/d7f6de24-8d2b-4685-b39d-269dd3e4e2fe" width="200" /> 
 
 
-##  技术栈
+##   apk下载
 
-- **前端框架**：Flutter 3.x  
-- **状态管理**：MVVM + `ChangeNotifier`  
-- **网络请求**：`http`  
-- **数据存储**：`shared_preferences`  
-- **可视化图表**：`fl_chart`  
-- **图片选择**：`image_picker`
-
----
-##  API 文档
-
-项目的 Mock API 文档已托管在 Apifox，点击下方链接即可查看接口详情与示例。
-
- [点击进入 Apifox 在线文档](https://s.apifox.cn/3674d14e-0f13-4d49-8303-0de16d910063)
+项目apk可访问路径clearsky/release/app-arm64-v8a-release.apk.1 下载并运行
 
 
 

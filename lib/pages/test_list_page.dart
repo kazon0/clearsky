@@ -1,4 +1,3 @@
-// lib/pages/test_list_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:clearsky/viewmodels/assessment_view_model.dart';
@@ -107,7 +106,7 @@ class _TestListPageState extends State<TestListPage> {
                         testId: testId,
                         title: title,
                         desc: desc,
-                        imagePath: _pickCover(idx),
+                        cover: vm.getRandomCover(testId),
                       );
                     },
                   ),
@@ -117,58 +116,46 @@ class _TestListPageState extends State<TestListPage> {
     );
   }
 
-  String _pickCover(int id) {
-    final covers = [
-      'assets/images/cover1.jpg',
-      'assets/images/cover2.jpg',
-      'assets/images/cover3.jpg',
-      'assets/images/cover4.jpg',
-    ];
-    return covers[id % covers.length];
-  }
-
-  // 卡片组件
   Widget _testCard(
     BuildContext context, {
     required int testId,
     required String title,
     required String desc,
-    required String imagePath,
+    required String cover,
   }) {
     return Card(
       color: Colors.grey.shade50,
-      elevation: 8,
+      elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 25, left: 4, right: 4),
+      margin: const EdgeInsets.only(bottom: 22),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) {
-                return AssessmentPage(testId: testId);
-              },
-            ),
+            MaterialPageRoute(builder: (_) => AssessmentPage(testId: testId)),
           );
         },
         child: Row(
           children: [
+            // 左侧封面图
             Padding(
               padding: const EdgeInsets.all(10),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  imagePath,
-                  width: 110,
-                  height: 85,
+                  cover,
+                  width: 120,
+                  height: 90,
                   fit: BoxFit.cover,
                 ),
               ),
             ),
+
+            // 右侧标题 + 简介
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 10, top: 8, bottom: 8),
+                padding: const EdgeInsets.only(right: 12, top: 0, bottom: 35),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -176,13 +163,12 @@ class _TestListPageState extends State<TestListPage> {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                     const SizedBox(height: 6),
 
                     // 描述

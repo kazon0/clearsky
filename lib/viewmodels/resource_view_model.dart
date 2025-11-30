@@ -69,13 +69,29 @@ class ResourceViewModel extends ChangeNotifier {
     final item = resources[index];
     final oldStatus = item['isLiked'] ?? false;
 
+    // 本地优化更新
+    resources[index]['isLiked'] = !oldStatus;
+    notifyListeners();
+
     try {
-      await ResourceService.likeResource(item['id'], !oldStatus);
-      resources[index]['isLiked'] = !oldStatus;
-      notifyListeners();
+      final res = await ResourceService.likeResource(item['id'], !oldStatus);
+
+      // 兼容后端可能返回新的状态
+      if (res['data'] != null && res['data'] is Map) {
+        resources[index]['isLiked'] = res['data']['isLiked'] ?? !oldStatus;
+
+        if (res['data']['likeCount'] != null) {
+          resources[index]['likeCount'] = res['data']['likeCount'];
+        }
+      }
     } catch (e) {
-      debugPrint('操作失败: $e');
+      debugPrint("点赞失败: $e");
+
+      // 失败回滚
+      resources[index]['isLiked'] = oldStatus;
     }
+
+    notifyListeners();
   }
 
   Future<void> loadDetail(int id) async {

@@ -102,4 +102,28 @@ class TestService {
       throw Exception('提交失败：${res.statusCode}');
     }
   }
+
+  static Future<List<Map<String, dynamic>>> getTestRecords({
+    int page = 1,
+    int size = 10,
+  }) async {
+    final token = await _getToken();
+
+    final uri = Uri.parse('$baseUrl/tests/records?page=$page&size=$size');
+
+    final res = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      return List<Map<String, dynamic>>.from(data['data']?['list'] ?? []);
+    } else {
+      throw Exception("获取测评记录失败：${res.statusCode}");
+    }
+  }
 }

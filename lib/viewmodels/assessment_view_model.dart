@@ -16,6 +16,17 @@ class AssessmentViewModel extends ChangeNotifier {
   // 当前题目索引
   int currentIndex = 0;
 
+  final List<String> coverImages = List.generate(
+    9,
+    (i) => "assets/images/cover${i + 1}.jpg",
+  );
+
+  /// 根据 resourceId 生成稳定随机封面
+  String getRandomCover(int resourceId) {
+    final index = resourceId % coverImages.length;
+    return coverImages[index];
+  }
+
   /// 获取所有可用的测试列表
   Future<void> fetchTests({String keyword = ""}) async {
     isLoading = true;
@@ -77,8 +88,8 @@ class AssessmentViewModel extends ChangeNotifier {
   }
 
   /// 选择题目答案
-  void selectAnswer(int index, int score) {
-    answers[index] = score;
+  void selectAnswer(int index, int optionIndex) {
+    answers[index] = optionIndex;
     notifyListeners();
   }
 
@@ -104,9 +115,14 @@ class AssessmentViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final formattedAnswers = answers.entries.map((e) {
+        final question = questions[e.key];
+        final options = question['options'] as List<dynamic>;
+
+        final selectedValue = options[e.value]['value'];
+
         return {
-          'questionId': questions[e.key]['id'],
-          'selectedOption': e.value.toString(),
+          'questionId': question['id'],
+          'selectedOption': selectedValue.toString(),
         };
       }).toList();
 
@@ -115,6 +131,22 @@ class AssessmentViewModel extends ChangeNotifier {
         answers: formattedAnswers,
       );
       print("测评报告 result = $report");
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  List<Map<String, dynamic>> recordList = [];
+
+  Future<void> fetchTestRecords({int page = 1, int size = 10}) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      recordList = await TestService.getTestRecords(page: page, size: size);
+    } catch (e) {
+      errorMessage = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();

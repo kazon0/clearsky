@@ -20,50 +20,28 @@ class ReportPage extends StatelessWidget {
     final testTitle = result['testTitle'] ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: const Color(0xFFF4F7FA),
       appBar: AppBar(
         title: const Text("测评报告"),
         centerTitle: true,
         backgroundColor: Colors.white,
+        elevation: 0.4,
         foregroundColor: Colors.black87,
-        elevation: 0.3,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(score, level, testTitle, completedAt),
+            _headerCard(testTitle, score, level, completedAt),
             const SizedBox(height: 20),
-            _buildSection("总体报告", report),
+            _textCard("总体报告", report),
             const SizedBox(height: 20),
-            _buildSuggestions(suggestions),
+            _suggestionCard(suggestions),
             const SizedBox(height: 20),
-            _buildDetailedResults(detailedResults),
+            _detailsCard(detailedResults),
             const SizedBox(height: 40),
-
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TestListPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text("返回测评列表"),
-              ),
-            ),
+            _backButton(context),
           ],
         ),
       ),
@@ -71,44 +49,74 @@ class ReportPage extends StatelessWidget {
   }
 
   /// 顶部卡片
-  Widget _buildHeader(
+  Widget _headerCard(
+    String title,
     dynamic score,
     String level,
-    String title,
     String completedAt,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+            color: Colors.black12.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          // 圆形徽章
+          Container(
+            width: 66,
+            height: 66,
+            decoration: BoxDecoration(
+              color: const Color(0xFF80A7FF),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              "$score",
+              style: const TextStyle(
+                fontSize: 26,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            "得分：$score",
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "等级：$level",
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.blueAccent,
+
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.isEmpty ? "测评结果" : title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "等级：$level",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF5086FF),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  completedAt,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ],
             ),
           ),
         ],
@@ -116,54 +124,139 @@ class ReportPage extends StatelessWidget {
     );
   }
 
-  /// 通用文本区域
-  Widget _buildSection(String title, String content) {
+  /// 通用文本卡片
+  Widget _textCard(String title, String content) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      decoration: _boxStyle(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 10),
-          Text(content, style: const TextStyle(fontSize: 15)),
+          _sectionTitle(title),
+          const SizedBox(height: 12),
+          Text(content, style: const TextStyle(fontSize: 15, height: 1.5)),
         ],
       ),
     );
   }
 
-  /// 建议模块
-  Widget _buildSuggestions(List<String> suggestions) {
+  /// 建议
+  Widget _suggestionCard(List<String> suggestions) {
     if (suggestions.isEmpty) {
-      return _buildSection("建议", "暂无建议");
+      return _textCard("建议", "暂无建议");
     }
 
-    return _buildSection("建议", suggestions.map((s) => "• $s").join("\n"));
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _boxStyle(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle("建议"),
+          const SizedBox(height: 12),
+          ...suggestions.map(
+            (s) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      size: 18,
+                      color: Color(0xFF6CA6FF),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s,
+                      style: const TextStyle(fontSize: 15, height: 1.45),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// 详细维度得分
-  Widget _buildDetailedResults(Map<String, dynamic> details) {
-    if (details.isEmpty) {
-      return _buildSection("维度分析", "暂无详细分析");
-    }
+  /// 维度分析
+  Widget _detailsCard(Map<String, dynamic> details) {
+    if (details.isEmpty) return _textCard("维度分析", "暂无详细分析");
 
-    String formatted = details.entries
-        .map((e) => "${e.key}：${e.value}")
-        .join("\n");
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _boxStyle(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle("维度分析"),
+          const SizedBox(height: 12),
+          ...details.entries.map(
+            (e) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${e.key}：${e.value}",
+                  style: const TextStyle(fontSize: 15),
+                ),
+                const Divider(height: 14, color: Colors.black12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    return _buildSection("维度分析", formatted);
+  /// 返回列表按钮
+  Widget _backButton(BuildContext context) {
+    return Center(
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const TestListPage()),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF4F8CFF),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          elevation: 3,
+        ),
+        child: const Text("返回测评列表", style: TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+
+  /// 小标题
+  Widget _sectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+    );
+  }
+
+  /// 卡片样式
+  BoxDecoration _boxStyle() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12.withOpacity(0.05),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
   }
 }

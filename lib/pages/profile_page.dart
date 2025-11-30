@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../viewmodels/user_view_model.dart';
 import 'profile_guest_page.dart';
 import 'edit_profile_page.dart';
+import 'test_report_page.dart';
+import 'test_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -174,7 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 20),
 
-                  // ==== 功能区域 ====
+                  // 功能区域
                   Material(
                     color: Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(20),
@@ -195,22 +197,35 @@ class _ProfilePageState extends State<ProfilePage> {
                           }),
 
                           _divider(),
-                          _featureItem(Icons.analytics_outlined, '测试报告', () {}),
+                          _featureItem(Icons.analytics_outlined, '测试报告', () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const TestReportPage(),
+                              ),
+                            );
+                          }),
+
                           _divider(),
                           _featureItem(
                             Icons.psychology_alt_outlined,
                             '心理测评',
-                            () {},
+                            () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const TestListPage(),
+                                ),
+                              );
+                            },
                           ),
+
                           _divider(),
-                          _featureItem(Icons.favorite_border, '我的收藏', () {}),
-                          _divider(),
-                          _featureItem(
-                            Icons.logout,
-                            '退出登录',
-                            userVM.logout,
-                            color: Colors.red.shade400,
-                          ),
+                          // _featureItem(Icons.favorite_border, '我的收藏', () {}),
+                          //_divider(),
+                          _featureItem(Icons.logout, '退出登录', () {
+                            showPrettyLogoutDialog(context, userVM.logout);
+                          }, color: Colors.red.shade400),
                         ],
                       ),
                     ),
@@ -230,9 +245,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // =================
-  // 工具函数
-  // =================
   static String _formatDate(String? date) {
     if (date == null) return '未知';
     return date.substring(0, 10);
@@ -267,6 +279,96 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // 其他意外值全部 fallback
     return const AssetImage('assets/images/avatar1.jpg');
+  }
+
+  void showPrettyLogoutDialog(BuildContext context, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return Center(
+          child: Container(
+            width: 280,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(
+                    "确认退出登录吗？",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                // 按钮行
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // 取消按钮
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          "取消",
+                          style: TextStyle(fontSize: 13, color: Colors.black87),
+                        ),
+                      ),
+                    ),
+
+                    // 确定按钮
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        onConfirm();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF6F99BF),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          "确定",
+                          style: TextStyle(fontSize: 13, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _featureItem(

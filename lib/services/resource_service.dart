@@ -74,7 +74,7 @@ class ResourceService {
   }
 
   /// 点赞 / 取消点赞
-  static Future<void> likeResource(int id, bool isLike) async {
+  static Future<Map<String, dynamic>> likeResource(int id, bool isLike) async {
     final token = await _getToken();
     final action = isLike ? 'LIKE' : 'UNLIKE';
 
@@ -82,11 +82,15 @@ class ResourceService {
 
     final res = await http.post(
       url,
-      headers: {'Authorization': 'Bearer $token'},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
-
-    if (res.statusCode != 200) {
-      throw Exception('点赞失败：${res.statusCode}');
+    if (res.statusCode == 200) {
+      return json.decode(res.body);
+    } else {
+      throw Exception('点赞失败：${res.statusCode} => ${res.body}');
     }
   }
 }
